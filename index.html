@@ -272,6 +272,15 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .comment-box{background:var(--soft);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.5}
 
 .roster{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+
+.st tr.z-bye td:first-child{box-shadow:inset 4px 0 0 #1c7c4d}
+.st tr.z-pi td:first-child{box-shadow:inset 4px 0 0 #3a86d6}
+.st tr.z-po td:first-child{box-shadow:inset 4px 0 0 #d98a1b}
+.st tr.z-rel td:first-child{box-shadow:inset 4px 0 0 #c0432f}
+.zleg{list-style:none;margin:12px 0 4px;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--muted)}
+.zleg li{display:flex;align-items:center;gap:8px}
+.zleg i{flex:0 0 auto;width:4px;height:16px;border-radius:2px}
+.zleg i.z-bye{background:#1c7c4d}.zleg i.z-pi{background:#3a86d6}.zleg i.z-po{background:#d98a1b}.zleg i.z-rel{background:#c0432f}
 .rcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;text-align:left}
 .rcard.rowbtn{width:100%;font:inherit;color:inherit;border:1px solid var(--line);cursor:pointer}
 .rcard .rnum{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:var(--team-ink,var(--team));color:#fff;display:flex;align-items:center;justify-content:center;font:700 15px/1 var(--display)}
@@ -1434,9 +1443,11 @@ function renderClassifica(){
   if(!started) h += `<p class="warn">Il campionato non \u00e8 ancora iniziato (si parte il 2 ottobre): tutte le squadre sono ancora a quota zero, quindi l'ordine qui sotto \u00e8 solo alfabetico, non una classifica vera.</p>`;
   h += `<div class="tscroll"><table class="st"><thead><tr><th>Squadra</th><th>G</th><th>V</th><th>P</th><th>PF</th><th>PS</th><th>Pt</th></tr></thead><tbody>`;
   rows.forEach((t,i) => {
-    h += `<tr class="${t.us?'pick':''}"><td>${started?`<span class="gnum${t.us?' home':''}">${i+1}</span>`:''}${esc(t.team)}</td><td>${t.g}</td><td>${t.v}</td><td>${t.p}</td><td>${t.pf}</td><td>${t.ps}</td><td class="hi">${t.pt}</td></tr>`;
+    const zone = !started ? '' : i<2 ? ' z-bye' : i<6 ? ' z-pi' : i===14 ? ' z-po' : i===15 ? ' z-rel' : '';
+    h += `<tr class="${(t.us?'pick':'')+zone}"><td>${started?`<span class="gnum${t.us?' home':''}">${i+1}</span>`:''}${esc(t.team)}</td><td>${t.g}</td><td>${t.v}</td><td>${t.p}</td><td>${t.pf}</td><td>${t.ps}</td><td class="hi">${t.pt}</td></tr>`;
   });
   h += `</tbody></table></div>`;
+  h += `<ul class="zleg"><li><i class="z-bye"></i>1ª–2ª: direttamente alle semifinali playoff</li><li><i class="z-pi"></i>3ª–6ª: play-in (gara secca) per accedere alle semifinali</li><li><i class="z-po"></i>15ª: playout incrociato con la 15ª dell'altro girone</li><li><i class="z-rel"></i>16ª: retrocessione diretta in Divisione Regionale 2</li></ul>${started?'':'<p class="fine" style="padding:0 0 6px">I colori compariranno appena ci sarà una classifica vera.</p>'}`;
   h += `<p class="fine" style="padding:0">Aggiornata al ${esc(STANDINGS_SOURCE.date)} \u00b7 Fonte: <a href="${esc(STANDINGS_SOURCE.url)}" target="_blank" rel="noopener">${esc(STANDINGS_SOURCE.label)}</a></p>`;
   $('#classifica-body').innerHTML = h;
 }
@@ -1445,17 +1456,20 @@ function renderClassifica(){
 function initials(name){
   return name.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2);
 }
-function rosterDetailHTML(p, a){
+function rosterDetailHTML(p, a, cur){
+  const src = cur || a, label = cur ? '2026/2027' : '2025/2026';
   let h = `<div class="rdetail"><h3>${esc(p.name)}${p.cap?' <span class="cap" style="font-size:13px">(capitano)</span>':''}</h3>`;
-  if(a){
+  if(src){
     h += `<div class="kpis">
-      <div class="kpi"><b>${a.pg}</b><span>Partite giocate</span></div>
-      <div class="kpi"><b>${fmt1(a.ppg)}</b><span>Punti a partita</span></div>
-      <div class="kpi"><b>${fmt1(a.rpg)}</b><span>Rimbalzi a partita</span></div>
-      <div class="kpi"><b>${fmt1(a.apg)}</b><span>Assist a partita</span></div></div>
-      <p class="fine" style="padding:8px 0 0">Medie della stagione 2025/2026. Le statistiche 2026/2027 compariranno qui non appena inizieranno le partite.</p>`;
+      <div class="kpi"><b>${src.pg}</b><span>Partite giocate</span></div>
+      <div class="kpi"><b>${fmt1(src.ppg)}</b><span>Punti a partita</span></div>
+      <div class="kpi"><b>${fmt1(src.rpg)}</b><span>Rimbalzi a partita</span></div>
+      <div class="kpi"><b>${fmt1(src.apg)}</b><span>Assist a partita</span></div></div>
+      <div class="kpis" style="margin-top:8px">
+      ${[[src.twm,src.twa,'Tiri da 2'],[src.tpm,src.tpa,'Tiri da 3'],[src.ftm,src.fta,'Tiri liberi']].map(x=>`<div class="kpi"><b>${x[1]?Math.round(100*x[0]/x[1])+'%':'–'}</b><span>${x[2]}<br>${x[0]}/${x[1]}</span></div>`).join('')}</div>
+      <p class="fine" style="padding:8px 0 0">Stagione ${label}${cur?' (finora)':''}: medie a partita e percentuali sul totale dei tiri.</p>`;
   } else {
-    h += `<p class="fine" style="padding:0">Nessuna statistica della stagione scorsa disponibile per questo giocatore. Le statistiche 2026/2027 compariranno qui non appena inizieranno le partite.</p>`;
+    h += `<p class="fine" style="padding:0">Nessuna statistica disponibile per questo giocatore: compariranno qui con le partite della stagione 2026/2027.</p>`;
   }
   h += '</div>';
   return h;
@@ -1464,15 +1478,16 @@ function renderRoster(){
   $('#roster-season').textContent = TEAM.season;
   const agg = archiveSeasonAgg();
   const byName = {}; agg.forEach(a => { byName[a.name] = a; });
+  const curBy = {}; seasonAgg().forEach(a => { const o=curBy[a.name]; if(!o || a.pg>o.pg) curBy[a.name]=a; });
   $('#roster-list').innerHTML = ROSTER.slice().sort((a,b)=>(a.num==null)-(b.num==null)||(a.num-b.num)).map(p => {
-    const a = byName[p.name];
-    const sub = a ? `${fmt1(a.ppg)} pt · ${fmt1(a.rpg)} rimb · ${fmt1(a.apg)} ass a partita (2025/26)` : 'Statistiche in arrivo con le prime partite';
+    const a = byName[p.name], cur = curBy[p.name], src = cur||a;
+    const sub = src ? `${fmt1(src.ppg)} pt · ${fmt1(src.rpg)} rimb · ${fmt1(src.apg)} ass a partita (${cur?'2026/27':'2025/26'})` : 'Statistiche in arrivo con le prime partite';
     let s = `<button type="button" class="rcard rowbtn${st.roster===p.name?' pick':''}" data-roster="${esc(p.name)}">
       <span class="rnum">${p.num!=null?p.num:esc(initials(p.name))}</span>
       <span class="rbody"><span class="rname">${esc(p.name)}${p.cap?'<span class="cap">CAP.</span>':''}</span><span class="rsub">${sub}</span></span>
       <span class="rarrow" aria-hidden="true">${st.roster===p.name?'▲':'▼'}</span>
     </button>`;
-    if(st.roster===p.name) s += rosterDetailHTML(p, a);
+    if(st.roster===p.name) s += rosterDetailHTML(p, a, cur);
     return s;
   }).join('');
   $('#roster-detail').innerHTML = '';
