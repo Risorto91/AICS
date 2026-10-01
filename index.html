@@ -58,7 +58,7 @@ a{color:inherit}
 .top p{margin:4px 0 0;opacity:.85;font-size:15px}
 
 main{padding-top:30px}
-#tab-home{padding-top:22px}
+main > section{padding-top:22px}
 h2{font:700 21px/1.2 var(--display);margin:0 0 12px}
 h3{font:700 17px/1.2 var(--display);margin:22px 0 10px}
 
@@ -167,6 +167,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .shotwrap{max-width:280px;margin:0 auto}
 .shotwrap svg{display:block;width:100%;height:auto}
 .st td.detailcell{white-space:normal;text-align:left;position:static;box-shadow:none;background:var(--soft);padding:12px}
+.st td.detailcell > *{position:sticky;left:0;box-sizing:border-box;width:min(calc(100vw - 58px),584px)}
 .st td.detailcell h3:first-child{margin-top:0}
 .st tr.detailrow td{border-bottom:1px solid var(--soft)}
 .st td.detailcell .shotcard{margin:0}
@@ -287,6 +288,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .rcard .rbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .rcard .rname{font-weight:700;font-size:15px}
 .rcard .rname .cap{color:var(--team-text);font-weight:700;font-size:12px;margin-left:6px}
+.rcard .rsub .shp{color:var(--ink);font-weight:700}
 .rcard .rsub{font-size:12.5px;color:var(--muted);margin-top:2px}
 .rcard .rarrow{flex:0 0 auto;color:var(--muted)}
 .rdetail{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
@@ -1475,13 +1477,14 @@ function rosterDetailHTML(p, a, cur){
   return h;
 }
 function renderRoster(){
+  const pc = (m,t) => t ? Math.round(100*m/t)+'%' : '\u2013';
   $('#roster-season').textContent = TEAM.season;
   const agg = archiveSeasonAgg();
   const byName = {}; agg.forEach(a => { byName[a.name] = a; });
   const curBy = {}; seasonAgg().forEach(a => { const o=curBy[a.name]; if(!o || a.pg>o.pg) curBy[a.name]=a; });
   $('#roster-list').innerHTML = ROSTER.slice().sort((a,b)=>(a.num==null)-(b.num==null)||(a.num-b.num)).map(p => {
     const a = byName[p.name], cur = curBy[p.name], src = cur||a;
-    const sub = src ? `${fmt1(src.ppg)} pt · ${fmt1(src.rpg)} rimb · ${fmt1(src.apg)} ass a partita (${cur?'2026/27':'2025/26'})` : 'Statistiche in arrivo con le prime partite';
+    const sub = src ? `${fmt1(src.ppg)} pt · ${fmt1(src.rpg)} rimb · ${fmt1(src.apg)} ass a partita (${cur?'2026/27':'2025/26'})<br><b class="shp">2P ${pc(src.twm,src.twa)} \u00b7 3P ${pc(src.tpm,src.tpa)} \u00b7 TL ${pc(src.ftm,src.fta)}</b>` : 'Statistiche in arrivo con le prime partite';
     let s = `<button type="button" class="rcard rowbtn${st.roster===p.name?' pick':''}" data-roster="${esc(p.name)}">
       <span class="rnum">${p.num!=null?p.num:esc(initials(p.name))}</span>
       <span class="rbody"><span class="rname">${esc(p.name)}${p.cap?'<span class="cap">CAP.</span>':''}</span><span class="rsub">${sub}</span></span>
