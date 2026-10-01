@@ -469,20 +469,20 @@ const TEAM = { name:'AICS Junior Basket Forlì', season:'2026/2027 · Divisione 
    scheda nell'archivio 2025/2026 per mostrare una versione "light" delle statistiche passate,
    finché non ci saranno partite giocate quest'anno. */
 const ROSTER = [
-  { name:'Giacomo Gasperini' },
-  { name:'Mamadou Gassama' },
-  { name:'Luca Lombini' },
-  { name:'Riccardo Malaguti' },
-  { name:'Enrico Mistral' },
-  { name:'Elia Naldini' },
-  { name:'Alessandro Pinza' },
-  { name:'Matteo Ravaioli' },
-  { name:'Simone Ravaioli' },
-  { name:'Federico Zammarchi', cap:true },
-  { name:'Riccardo Gorini' },
-  { name:'Emanuele Agatensi' },
-  { name:'Marco Bergantini' },
-  { name:'Federico Bellesia' }
+  { name:'Giacomo Gasperini', num:5 },
+  { name:'Mamadou Gassama', num:99 },
+  { name:'Luca Lombini', num:91 },
+  { name:'Riccardo Malaguti', num:22 },
+  { name:'Enrico Mistral', num:21 },
+  { name:'Elia Naldini', num:30 },
+  { name:'Alessandro Pinza', num:23 },
+  { name:'Matteo Ravaioli', num:10 },
+  { name:'Simone Ravaioli', num:17 },
+  { name:'Federico Zammarchi', num:11, cap:true },
+  { name:'Riccardo Gorini', num:8 },
+  { name:'Emanuele Agatensi', num:27 },
+  { name:'Marco Bergantini', num:1 },
+  { name:'Federico Bellesia', num:6 }
 ];
 
 /* Indirizzi e date dalla Lista Incontri FIP (Comitato CR Emilia Romagna).
@@ -1464,11 +1464,11 @@ function renderRoster(){
   $('#roster-season').textContent = TEAM.season;
   const agg = archiveSeasonAgg();
   const byName = {}; agg.forEach(a => { byName[a.name] = a; });
-  $('#roster-list').innerHTML = ROSTER.map(p => {
+  $('#roster-list').innerHTML = ROSTER.slice().sort((a,b)=>(a.num==null)-(b.num==null)||(a.num-b.num)).map(p => {
     const a = byName[p.name];
     const sub = a ? `${fmt1(a.ppg)} pt · ${fmt1(a.rpg)} rimb · ${fmt1(a.apg)} ass a partita (2025/26)` : 'Statistiche in arrivo con le prime partite';
     let s = `<button type="button" class="rcard rowbtn${st.roster===p.name?' pick':''}" data-roster="${esc(p.name)}">
-      <span class="rnum">${esc(initials(p.name))}</span>
+      <span class="rnum">${p.num!=null?p.num:esc(initials(p.name))}</span>
       <span class="rbody"><span class="rname">${esc(p.name)}${p.cap?'<span class="cap">CAP.</span>':''}</span><span class="rsub">${sub}</span></span>
       <span class="rarrow" aria-hidden="true">${st.roster===p.name?'▲':'▼'}</span>
     </button>`;
@@ -1642,6 +1642,7 @@ function init(){
 
   $('#season-seg').addEventListener('click', e => { const b=e.target.closest('button'); if(b){ st.season=b.dataset.sea; st.player=null; st.shotKey=null; st.chartSel=null; renderStats(); } });
   $('#stats-seg').addEventListener('click', e => { const b=e.target.closest('button'); if(b){ st.view=b.dataset.v; renderStats(); } });
+  $('#roster-list').addEventListener('click', e => { const b=e.target.closest('[data-roster]'); if(!b) return; const n=b.dataset.roster; st.roster = st.roster===n ? null : n; renderRoster(); const el=document.querySelector('#roster-list .rcard.pick'); if(el && el.scrollIntoView) el.scrollIntoView({block:'nearest',behavior:'smooth'}); });
   $('#pct-toggle').addEventListener('click', () => { st.pct = !st.pct; renderStats(); });
   $('#stats-match').addEventListener('click', e => {
     if(e.target.closest('[data-shotclose]')){ st.shotKey=null; renderStats(); return; }
