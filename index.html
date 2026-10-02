@@ -260,6 +260,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .n3card .wpz{font-size:12.5px;font-weight:700;margin-top:3px}
 .weekrow .wi .wp{font-size:12.5px;color:var(--muted)}
 .weekrow.ismatch .wd b{color:var(--team-text)}
+.weekrow .wcar{flex:0 0 auto;font-size:18px;line-height:1}
 .weekrow .wtag{flex:0 0 auto;background:var(--team);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
 .n3card{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--team);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer}
 .n3card .wd{flex:0 0 52px;text-align:center}
@@ -1534,8 +1535,8 @@ function weekRowHTML(it){
   const title = it.isMatch ? 'Partita' : 'Allenamento';
   const sub = [it.place, it.extra].filter(Boolean).join(' · ');
   const inner = `<div class="wd"><b>${dt.getDate()}</b><span>${esc(dayLabelFromISO(it.date).slice(0,3))}</span></div>
-    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${it.isMatch?carHTML(it.date):''}${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}</div>
-    ${it.isMatch?'<span class="wtag">Partita</span>':''}`;
+    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}</div>
+    ${it.isMatch?`${MACCHINE[it.date]?'<span class="wcar" role="img" aria-label="Macchina: '+esc(MACCHINE[it.date].filter(Boolean).join(', '))+'">🚗</span>':''}<span class="wtag">Partita</span>`:''}`;
   return it.isMatch
     ? `<button type="button" class="weekrow ismatch" data-date="${esc(it.date)}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;cursor:pointer">${inner}</button>`
     : `<div class="weekrow">${inner}</div>`;
