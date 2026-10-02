@@ -475,7 +475,8 @@ function sun(w){ const d=todayD(); const off=((7-d.getDay())%7)||7; d.setDate(d.
    dati-settimana.js -> programma allenamenti; dati-partite.js -> partite, classifica, statistiche */
 const PASTE = window.AICS.PASTE || {};
 const MACCHINE = window.AICS.MACCHINE || {};
-const carHTML = d => MACCHINE[d] ? `<div class="wpz">🚗 Macchina: ${esc(MACCHINE[d][0])}${MACCHINE[d][1]?` <span class="wpf">\u00b7 facoltativo: ${esc(MACCHINE[d][1])}</span>`:''}</div>` : '';
+const carTxt = d => MACCHINE[d] ? '🚗 Macchina: ' + MACCHINE[d].filter(Boolean).join(', ') : '';
+const carHTML = d => MACCHINE[d] ? `<div class="wpz">${esc(carTxt(d))}</div>` : '';
 const { WEEK_SCHEDULE, MATCHES, MATCH_EXTRA, SEASON_ARCHIVE, STANDINGS, STANDINGS_SOURCE } = window.AICS;
 const DEMO = false;
 
@@ -784,6 +785,7 @@ function renderDay(){
     h += `<div class="it"><p class="m-opp">${esc(m.opp)}</p>
       <p class="m-line"><span class="tag${m.home?' home':''}">${homeAway(m.home)}</span>Ore ${esc(m.time)}${m.type?' · '+esc(m.type):''}</p>
       <p class="m-line">${esc(gymName(m.gym))}${g&&g.addr?', '+esc(g.addr):''}</p>
+      ${(!m.home && !r && MACCHINE[m.date])?`<p class="m-line"><b>${esc(carTxt(m.date))}</b></p>`:''}
       ${r?`<p class="m-line"><span class="res ${r.us>r.them?'w':'l'}">${r.us>r.them?'Vinta':'Persa'} ${r.us} – ${r.them}</span></p>`:''}
       ${r?'':calActions(m)}</div>`;
   });
@@ -794,14 +796,14 @@ function renderNext(){
   if(!n){ box.hidden = true; return; }
   box.hidden = false;
   box.innerHTML = `<div><p class="sm">Prossima partita, ${esc(whenTxt(daysFrom(n.date)))}</p>
-    <p class="big">${esc(n.opp)}</p><p class="sm">${esc(fmtLong(parseDate(n.date)))}, ore ${esc(n.time)} · ${homeAway(n.home)}</p></div>
+    <p class="big">${esc(n.opp)}</p><p class="sm">${esc(fmtLong(parseDate(n.date)))}, ore ${esc(n.time)} · ${homeAway(n.home)}</p>${(!n.home && MACCHINE[n.date])?`<p class="sm">${esc(carTxt(n.date))}</p>`:''}</div>
     <button type="button" data-date="${n.date}">Apri</button>`;
 }
 function renderMatchList(){
   const up = upcoming(), pa = past();
   let h = up.length ? up.map((m,i) => `<button type="button" class="row${i===0?' next':''}" data-date="${m.date}">
       <span class="t">${esc(m.opp)} – ${esc(parseDate(m.date).toLocaleDateString('it-IT',{weekday:'short', day:'numeric', month:'short'}))}</span>
-      <span class="s">Ore ${esc(m.time)} · ${homeAway(m.home)} · ${esc(gymName(m.gym))}</span></button>`).join('')
+      <span class="s">Ore ${esc(m.time)} · ${homeAway(m.home)} · ${esc(gymName(m.gym))}</span>${(!m.home && MACCHINE[m.date])?`<span class="s" style="font-weight:700;color:var(--ink)">${esc(carTxt(m.date))}</span>`:''}</button>`).join('')
     : '<p class="empty">Nessuna partita in programma.</p>';
   if(pa.length){
     h += '<h3>Partite giocate</h3>' + pa.map(m => {
