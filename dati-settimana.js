@@ -18,3 +18,11 @@ window.AICS.WEEK_SCHEDULE = [
   { date:'2026-10-09', start:'20:00', end:'22:00', place:'Palestra Romiti' },
   { date:'2026-10-10', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs BK Giardini Margherita', match:true }
 ];
+
+/* =====================================================================
+   PASTE (chi porta le pizze dopo l'allenamento)
+   Una riga per data: 'AAAA-MM-GG': 'Nome'. Compare sotto la riga dell'allenamento di quel giorno.
+   Esempio:  '2026-10-06': 'Gorini',
+   ===================================================================== */
+window.AICS.PASTE = {
+};
