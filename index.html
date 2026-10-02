@@ -256,6 +256,8 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .weekrow .wi{flex:1;min-width:0}
 .weekrow .wi .wt{font-weight:700;font-size:14px}
 .weekrow .wi .wpz{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:3px}
+.weekrow .wi .wpf{font-weight:400;color:var(--muted)}
+.n3card .wpz{font-size:12.5px;font-weight:700;margin-top:3px}
 .weekrow .wi .wp{font-size:12.5px;color:var(--muted)}
 .weekrow.ismatch .wd b{color:var(--team-text)}
 .weekrow .wtag{flex:0 0 auto;background:var(--team);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
@@ -472,6 +474,8 @@ function sun(w){ const d=todayD(); const off=((7-d.getDay())%7)||7; d.setDate(d.
 /* Dati in file separati (da aggiornare senza toccare questo file):
    dati-settimana.js -> programma allenamenti; dati-partite.js -> partite, classifica, statistiche */
 const PASTE = window.AICS.PASTE || {};
+const MACCHINE = window.AICS.MACCHINE || {};
+const carHTML = d => MACCHINE[d] ? `<div class="wpz">🚗 Macchina: ${esc(MACCHINE[d][0])}${MACCHINE[d][1]?` <span class="wpf">\u00b7 facoltativo: ${esc(MACCHINE[d][1])}</span>`:''}</div>` : '';
 const { WEEK_SCHEDULE, MATCHES, MATCH_EXTRA, SEASON_ARCHIVE, STANDINGS, STANDINGS_SOURCE } = window.AICS;
 const DEMO = false;
 
@@ -1528,7 +1532,7 @@ function weekRowHTML(it){
   const title = it.isMatch ? 'Partita' : 'Allenamento';
   const sub = [it.place, it.extra].filter(Boolean).join(' · ');
   const inner = `<div class="wd"><b>${dt.getDate()}</b><span>${esc(dayLabelFromISO(it.date).slice(0,3))}</span></div>
-    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}</div>
+    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${it.isMatch?carHTML(it.date):''}${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}</div>
     ${it.isMatch?'<span class="wtag">Partita</span>':''}`;
   return it.isMatch
     ? `<button type="button" class="weekrow ismatch" data-date="${esc(it.date)}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;cursor:pointer">${inner}</button>`
@@ -1549,7 +1553,7 @@ function renderHomeNext3(){
     const dt = parseDate(m.date), g = gymById(m.gym);
     return `<button type="button" class="n3card" data-date="${esc(m.date)}" style="width:100%;border:1px solid var(--line);border-left:6px solid var(--team);font:inherit;color:inherit;cursor:pointer;text-align:left">
       <div class="wd"><b>${dt.getDate()}</b><span>${esc(dayLabelFromISO(m.date).slice(0,3))}</span></div>
-      <div class="wi"><div class="wt">${m.home?'':'@ '}${esc(m.opp)}</div><div class="wp">${esc(m.time)} · ${esc(g?g.name:'')} · ${homeAway(m.home)}</div></div>
+      <div class="wi"><div class="wt">${m.home?'':'@ '}${esc(m.opp)}</div><div class="wp">${esc(m.time)} · ${esc(g?g.name:'')} · ${homeAway(m.home)}</div>${m.home?'':carHTML(m.date)}</div>
     </button>`;
   }).join('');
 }
