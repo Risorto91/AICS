@@ -26,3 +26,26 @@ window.AICS.WEEK_SCHEDULE = [
    ===================================================================== */
 window.AICS.PASTE = {
 };
+
+/* =====================================================================
+   MACCHINE IN TRASFERTA (1 giocatore + 1 facoltativo che vanno in auto, oltre a pulmino e dirigente)
+   Una riga per ogni trasferta: 'AAAA-MM-GG': ['Titolare', 'Facoltativo'].
+   Compare sotto la partita, in Home. Escluse Malaguti, Agatensi, Bergantini, Bellesia e Gassama.
+   Turni generati a rotazione tra i 9 giocatori disponibili: modifica pure i nomi a mano.
+   ===================================================================== */
+window.AICS.MACCHINE = {
+  '2026-10-18': ['Gasperini', 'Lombini'],
+  '2026-11-07': ['M. Ravaioli', 'Mistral'],
+  '2026-11-13': ['Naldini', 'S. Ravaioli'],
+  '2026-11-28': ['Pinza', 'Zammarchi'],
+  '2027-01-09': ['Gorini', 'Gasperini'],
+  '2027-01-29': ['Lombini', 'M. Ravaioli'],
+  '2027-02-12': ['Mistral', 'Naldini'],
+  '2027-02-19': ['S. Ravaioli', 'Pinza'],
+  '2027-03-03': ['Zammarchi', 'Gorini'],
+  '2027-03-12': ['Gasperini', 'Lombini'],
+  '2027-04-03': ['M. Ravaioli', 'Mistral'],
+  '2027-04-11': ['Naldini', 'S. Ravaioli'],
+  '2027-04-16': ['Pinza', 'Zammarchi'],
+  '2027-05-01': ['Gorini', 'Gasperini']
+};
