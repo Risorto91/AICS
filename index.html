@@ -255,6 +255,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .weekrow .wd span{display:block;font-size:11px;color:var(--muted);text-transform:capitalize}
 .weekrow .wi{flex:1;min-width:0}
 .weekrow .wi .wt{font-weight:700;font-size:14px}
+.weekrow .wi .wpz{font-size:12.5px;font-weight:700;color:var(--ink);margin-top:3px}
 .weekrow .wi .wp{font-size:12.5px;color:var(--muted)}
 .weekrow.ismatch .wd b{color:var(--team-text)}
 .weekrow .wtag{flex:0 0 auto;background:var(--team);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px}
@@ -470,6 +471,7 @@ function sun(w){ const d=todayD(); const off=((7-d.getDay())%7)||7; d.setDate(d.
    ===================================================================== */
 /* Dati in file separati (da aggiornare senza toccare questo file):
    dati-settimana.js -> programma allenamenti; dati-partite.js -> partite, classifica, statistiche */
+const PASTE = window.AICS.PASTE || {};
 const { WEEK_SCHEDULE, MATCHES, MATCH_EXTRA, SEASON_ARCHIVE, STANDINGS, STANDINGS_SOURCE } = window.AICS;
 const DEMO = false;
 
@@ -1526,7 +1528,7 @@ function weekRowHTML(it){
   const title = it.isMatch ? 'Partita' : 'Allenamento';
   const sub = [it.place, it.extra].filter(Boolean).join(' · ');
   const inner = `<div class="wd"><b>${dt.getDate()}</b><span>${esc(dayLabelFromISO(it.date).slice(0,3))}</span></div>
-    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div></div>
+    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}</div>
     ${it.isMatch?'<span class="wtag">Partita</span>':''}`;
   return it.isMatch
     ? `<button type="button" class="weekrow ismatch" data-date="${esc(it.date)}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;cursor:pointer">${inner}</button>`
