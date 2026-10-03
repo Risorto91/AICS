@@ -286,6 +286,17 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .zleg li{display:flex;align-items:center;gap:8px}
 .zleg i{flex:0 0 auto;width:4px;height:16px;border-radius:2px}
 .zleg i.z-bye{background:#1c7c4d}.zleg i.z-pi{background:#3a86d6}.zleg i.z-po{background:#d98a1b}.zleg i.z-rel{background:#c0432f}
+.advh{margin:16px 0 8px;font:700 15px/1.2 var(--display)}
+.advgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.advk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:3px}
+.advk b{font:700 20px/1 var(--display)}
+.advk span{font-size:11.5px;color:var(--muted);line-height:1.2}
+.zones{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.zrow{display:grid;grid-template-columns:118px 1fr 74px;align-items:center;gap:8px;font-size:12.5px}
+.zn{color:var(--ink)}
+.zb{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.zb i{display:block;height:100%;background:var(--team);border-radius:4px}
+.zv{text-align:right;color:var(--muted);white-space:nowrap}
 .rcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;text-align:left}
 .rcard.rowbtn{width:100%;font:inherit;color:inherit;border:1px solid var(--line);cursor:pointer}
 .rcard .rnum{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:var(--team-ink,var(--team));color:#fff;display:flex;align-items:center;justify-content:center;font:700 15px/1 var(--display)}
@@ -1467,6 +1478,48 @@ function renderClassifica(){
 function initials(name){
   return name.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2);
 }
+/* --- statistiche avanzate (stime dai referti: stagione in corso dalla 5ª partita, prima quella scorsa) --- */
+function advAgg(name, isCur){
+  const lists = isCur ? played().map(m=>m.box.players) : SEASON_ARCHIVE.matches.map(m=>m.box.players);
+  const t = {min:0,pts:0,twm:0,twa:0,tpm:0,tpa:0,ftm:0,fta:0,reb:0,ast:0,tov:0,shots:[]};
+  lists.forEach(pl => pl.forEach(p => {
+    if(p.name!==name) return;
+    t.min += minToDec(p.min);
+    ['pts','twm','twa','tpm','tpa','ftm','fta','reb','ast','tov'].forEach(k => { t[k] += (p[k]||0); });
+    if(Array.isArray(p.shots)) t.shots.push(...p.shots);
+  }));
+  return t;
+}
+function zoneOf(sh){
+  const x=Math.abs(sh.x), y=sh.y, d=Math.hypot(sh.x, sh.y);
+  const three = d >= 6.5 || x >= 6.6;
+  if(three) return y <= 2.5 ? 'c3' : 'f3';
+  if(d < 1.8) return 'rim';
+  if(x <= 2.45 && y <= 5.8) return 'paint';
+  return 'mid';
+}
+const ZONES = [['rim','Sotto canestro'],['paint','Area'],['mid','Media distanza'],['c3','Tripla dall\u2019angolo'],['f3','Tripla frontale']];
+function advHTML(name, isCur){
+  const t = advAgg(name, isCur);
+  if(t.min < 30) return '<p class="fine" style="padding:10px 0 0">Statistiche avanzate non ancora disponibili: servono pi\u00f9 minuti giocati.</p>';
+  const fga = t.twa+t.tpa, fgm = t.twm+t.tpm;
+  const ts = (fga+0.44*t.fta) ? t.pts/(2*(fga+0.44*t.fta)) : null;
+  const efg = fga ? (fgm+0.5*t.tpm)/fga : null;
+  const p36 = v => fmt1(v*36/t.min);
+  const P = v => v==null ? '\u2013' : Math.round(v*100)+'%';
+  const tile = (b,l) => `<div class="advk"><b>${b}</b><span>${l}</span></div>`;
+  let h = `<h4 class="advh">Statistiche avanzate</h4><div class="advgrid">
+    ${tile(P(ts),'TS%')}${tile(P(efg),'eFG%')}${tile(t.tov?fmt1(t.ast/t.tov):'\u2013','Assist / palle perse')}
+    ${tile(p36(t.pts),'Punti / 36 min')}${tile(p36(t.reb),'Rimbalzi / 36 min')}${tile(p36(t.ast),'Assist / 36 min')}</div>`;
+  if(t.shots.length >= 5){
+    const z = {}; ZONES.forEach(k => { z[k[0]] = {m:0,a:0}; });
+    t.shots.forEach(sh => { const k = zoneOf(sh); z[k].a++; if(sh.made) z[k].m++; });
+    h += `<div class="zones">` + ZONES.filter(k => z[k[0]].a>0).map(k => { const o=z[k[0]], pc=Math.round(100*o.m/o.a);
+      return `<div class="zrow"><span class="zn">${k[1]}</span><span class="zb"><i style="width:${pc}%"></i></span><span class="zv">${o.m}/${o.a} \u00b7 ${pc}%</span></div>`; }).join('') + `</div>`;
+  }
+  h += `<p class="fine" style="padding:8px 0 0">TS% = efficienza complessiva al tiro (2, 3 e liberi insieme). eFG% = percentuale dal campo con il tiro da 3 contato 1,5. \u00ab/ 36 min\u00bb = valori ogni 36 minuti in campo. Zone di tiro stimate dalla posizione dei tiri.</p>`;
+  return h;
+}
 function rosterDetailHTML(p, a, cur){
   const src = cur || a, label = cur ? '2026/2027' : '2025/2026';
   let h = `<div class="rdetail"><h3>${esc(p.name)}${p.cap?' <span class="cap" style="font-size:13px">(capitano)</span>':''}</h3>`;
@@ -1478,7 +1531,7 @@ function rosterDetailHTML(p, a, cur){
       <div class="kpi"><b>${fmt1(src.apg)}</b><span>Assist a partita</span></div></div>
       <div class="kpis" style="margin-top:8px">
       ${[[src.twm,src.twa,'Tiri da 2'],[src.tpm,src.tpa,'Tiri da 3'],[src.ftm,src.fta,'Tiri liberi']].map(x=>`<div class="kpi"><b>${x[1]?Math.round(100*x[0]/x[1])+'%':'–'}</b><span>${x[2]}<br>${x[0]}/${x[1]}</span></div>`).join('')}</div>
-      <p class="fine" style="padding:8px 0 0">Stagione ${label}${cur?' (finora)':''}: medie a partita e percentuali sul totale dei tiri.</p>`;
+      <p class="fine" style="padding:8px 0 0">Stagione ${label}${cur?' (finora)':''}: medie a partita e percentuali sul totale dei tiri.</p>${advHTML(p.name, !!cur)}`;
   } else {
     h += `<p class="fine" style="padding:0">Nessuna statistica disponibile per questo giocatore: compariranno qui con le partite della stagione 2026/2027.</p>`;
   }
@@ -1490,9 +1543,10 @@ function renderRoster(){
   $('#roster-season').textContent = TEAM.season;
   const agg = archiveSeasonAgg();
   const byName = {}; agg.forEach(a => { byName[a.name] = a; });
+  const useCur = played().length >= 5;
   const curBy = {}; seasonAgg().forEach(a => { const o=curBy[a.name]; if(!o || a.pg>o.pg) curBy[a.name]=a; });
   $('#roster-list').innerHTML = ROSTER.slice().sort((a,b)=>(a.num==null)-(b.num==null)||(a.num-b.num)).map(p => {
-    const a = byName[p.name], cur = curBy[p.name], src = cur||a;
+    const a = byName[p.name], cur0 = curBy[p.name], cur = (useCur && cur0) ? cur0 : null, src = cur||a;
     const sub = src ? `${fmt1(src.ppg)} pt · ${fmt1(src.rpg)} rimb · ${fmt1(src.apg)} ass a partita (${cur?'2026/27':'2025/26'})<br><b class="shp">2P ${pc(src.twm,src.twa)} \u00b7 3P ${pc(src.tpm,src.tpa)} \u00b7 TL ${pc(src.ftm,src.fta)}</b>` : 'Statistiche in arrivo con le prime partite';
     let s = `<button type="button" class="rcard rowbtn${st.roster===p.name?' pick':''}" data-roster="${esc(p.name)}">
       <span class="rnum">${p.num!=null?p.num:esc(initials(p.name))}</span>
