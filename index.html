@@ -289,6 +289,13 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .zleg li{display:flex;align-items:center;gap:8px}
 .zleg i{flex:0 0 auto;width:4px;height:16px;border-radius:2px}
 .zleg i.z-bye{background:#1c7c4d}.zleg i.z-pi{background:#3a86d6}.zleg i.z-po{background:#d98a1b}.zleg i.z-rel{background:#c0432f}
+.tmt{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tmt th{font-size:11.5px;color:var(--muted);font-weight:600;text-align:right;padding:7px 10px;border-bottom:1px solid var(--line)}
+.tmt td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--soft);white-space:nowrap}
+.tmt td:first-child,.tmt th:first-child{text-align:left;white-space:normal}
+.tmt td.win{font-weight:700;color:var(--ink)}
+.tmt td.prev{color:var(--muted)}
+.tmt tr.tmh td{background:var(--soft);color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:left}
 .advh{margin:16px 0 8px;font:700 15px/1.2 var(--display)}
 .advgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .advk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:3px}
@@ -1074,6 +1081,84 @@ function chartHintHTML(list, sel, archive){
   const when = archive ? `Giornata ${sel+1} · ${m.home?'':'@ '}${esc(m.opp)}` : `${esc(fmtShort(m.date))} · ${m.home?'':'@ '}${esc(m.opp)}`;
   return `<p class="chart-hint"><b>${when}</b> · ${m.result.us}–${m.result.them}</p>`;
 }
+/* --- statistiche di squadra (stima dai referti; avversari solo dai totali di squadra) --- */
+function teamAgg(list){
+  const keys = ['pts','twm','twa','tpm','tpa','ftm','fta','oreb','dreb','reb','ast','tov','stl','blk','pf'];
+  const t = {}, o = {}; keys.forEach(k => { t[k]=0; o[k]=0; });
+  let n = 0, no = 0;
+  list.forEach(m => {
+    if(!m.box) return;
+    n++; const tot = teamTotal(m.box.players); keys.forEach(k => { t[k] += tot[k]; });
+    if(m.box.oppTotal){ no++; keys.forEach(k => { o[k] += (m.box.oppTotal[k]||0); }); }
+  });
+  const fga = t.twa+t.tpa;
+  const P = fga + 0.44*t.fta - t.oreb + t.tov;
+  return { n, no, t, o, P };
+}
+const TEAM_ROWS = [
+  ['Tiro',null],
+  ['Tiri da 2 (%)','p2','pct',1,(x)=>x.twa?x.twm/x.twa:null,true],
+  ['Tiri da 3 (%)','p3','pct',1,(x)=>x.tpa?x.tpm/x.tpa:null,true],
+  ['Tiri liberi (%)','ft','pct',1,(x)=>x.fta?x.ftm/x.fta:null,true],
+  ['eFG% (tiro da 3 = 1,5)','efg','pct',1,(x)=>(x.twa+x.tpa)?(x.twm+1.5*x.tpm)/(x.twa+x.tpa):null,true],
+  ['TS% (efficienza complessiva)','ts','pct',1,(x)=>{const f=x.twa+x.tpa+0.44*x.fta;return f?x.pts/(2*f):null;},true],
+  ['Ritmo e possessi',null],
+  ['Possessi a partita','poss','num',0,(x,y,c,n)=>c.P/n,false],
+  ['Punti ogni 100 possessi','rtg','num',1,(x,y,c)=>x.pts/c.P*100,true],
+  ['Palle perse (% possessi)','tovp','pct',-1,(x)=>{const d=x.twa+x.tpa+0.44*x.fta+x.tov;return d?x.tov/d:null;},false],
+  ['Rimbalzi offensivi (%)','orebp','pct',1,(x,y)=>(x.oreb+y.dreb)?x.oreb/(x.oreb+y.dreb):null,true],
+  ['Tiri liberi tentati / tiri','ftr','pct',1,(x)=>(x.twa+x.tpa)?x.fta/(x.twa+x.tpa):null,true],
+  ['A partita',null],
+  ['Rimbalzi','reb','num',1,(x,y,c,n)=>x.reb/n,true],
+  ['Assist','ast','num',1,(x,y,c,n)=>x.ast/n,false],
+  ['Palle rubate','stl','num',1,(x,y,c,n)=>x.stl/n,false],
+  ['Palle perse','tov','num',-1,(x,y,c,n)=>x.tov/n,false],
+  ['Falli','pf','num',-1,(x,y,c,n)=>x.pf/n,true]
+];
+function teamMetric(row, A, side){
+  const x = side==='o' ? A.o : A.t, y = side==='o' ? A.t : A.o;
+  const n = side==='o' ? A.no : A.n;
+  if(!n) return null;
+  if(side==='o' && !row[5]) return null;
+  // il rating avversario usa i possessi nostri (si assume che le due squadre ne abbiano gli stessi)
+  const ctx = { P: A.P*(n/(A.n||1)) };
+  const v = row[4](x, y, ctx, n);
+  return (v==null || !isFinite(v)) ? null : v;
+}
+function teamFmt(row, v){ return v==null ? '–' : (row[2]==='pct' ? Math.round(v*100)+'%' : fmt1(v)); }
+function teamStatsHTML(list, prevList){
+  const A = teamAgg(list); if(!A.n) return '';
+  const B = prevList ? teamAgg(prevList) : null;
+  const showPrev = !!(B && B.n);
+  let h = `<h4 class="advh">Statistiche di squadra</h4>`;
+  if(A.n < 4) h += `<p class="fine" style="padding:0 0 8px">Solo ${A.n} ${A.n===1?'partita giocata':'partite giocate'}: i dati diventano più affidabili dalla quarta.</p>`;
+  h += `<div class="tscroll"><table class="tmt"><thead><tr><th></th><th>Noi</th><th>Avv.</th>${showPrev?'<th>2025/26</th>':''}</tr></thead><tbody>`;
+  const changes = [];
+  TEAM_ROWS.forEach(row => {
+    if(row[1]===null){ h += `<tr class="tmh"><td colspan="${showPrev?4:3}">${row[0]}</td></tr>`; return; }
+    const a = teamMetric(row, A, 't'), o = teamMetric(row, A, 'o'), p = showPrev ? teamMetric(row, B, 't') : null;
+    let better = null; if(a!=null && o!=null && row[3]!==0 && Math.abs(a-o)>1e-9) better = ((a>o)===(row[3]>0)) ? 'a' : 'o';
+    h += `<tr><td>${esc(row[0])}</td><td class="${better==='a'?'win':''}">${teamFmt(row,a)}</td><td class="${better==='o'?'win':''}">${teamFmt(row,o)}</td>${showPrev?`<td class="prev">${teamFmt(row,p)}</td>`:''}</tr>`;
+    if(a!=null && p!=null && p!==0 && row[3]!==0 && ['p2','p3','ft','efg','ts','rtg','tovp','orebp','reb','ast','stl','tov'].includes(row[1])){
+      changes.push({ label:row[0].replace(/ \(.*\)/,''), rel:((a-p)/Math.abs(p))*row[3], a:teamFmt(row,a), p:teamFmt(row,p) });
+    }
+  });
+  h += `</tbody></table></div>`;
+  if(A.n >= 4 && changes.length){
+    const up = changes.filter(c=>c.rel>0.08).sort((x,y)=>y.rel-x.rel).slice(0,2);
+    const down = changes.filter(c=>c.rel<-0.08).sort((x,y)=>x.rel-y.rel).slice(0,2);
+    const f = c => `${esc(c.label)} (${c.a} contro ${c.p})`;
+    if(up.length || down.length){
+      h += `<div class="comment-box" style="margin-top:10px">`;
+      if(up.length) h += `<b>In crescita rispetto alla scorsa stagione:</b> ${up.map(f).join(', ')}.`;
+      if(up.length && down.length) h += '<br>';
+      if(down.length) h += `<b>Da migliorare:</b> ${down.map(f).join(', ')}.`;
+      h += `</div>`;
+    }
+  }
+  h += `<p class="fine" style="padding:8px 0 0">Il grassetto indica la squadra migliore nella voce. Dati avversari dai soli totali di squadra: assist, rubate e palle perse non sono rilevate in modo affidabile, quindi non vengono confrontate. I possessi sono stimati (tiri + 0,44 × liberi − rimbalzi offensivi + palle perse).</p>`;
+  return h;
+}
 function renderStatsSeason(){
   const list = played(), box = $('#stats-season');
   if(!list.length){ box.innerHTML = '<p class="empty">Nessuna statistica disponibile ancora: le medie stagionali compariranno qui dopo la prima partita.</p>'; return; }
@@ -1084,6 +1169,7 @@ function renderStatsSeason(){
     <div class="kpi"><b>${fmt1(pf-pa).replace(/^(\d)/,'+$1')}</b><span>Differenza media</span></div>
     <div class="kpi"><b>${fmt1(pf)}</b><span>Punti fatti a partita</span></div>
     <div class="kpi"><b>${fmt1(pa)}</b><span>Punti subiti a partita</span></div></div>`;
+  h += teamStatsHTML(list, SEASON_ARCHIVE.matches);
   h += `<div class="chart">${chartHTML(list, st.chartSel)}${chartHintHTML(list, st.chartSel, false)}<div class="leg2"><span><i style="background:var(--team)"></i>${esc(TEAM.name)}</span><span><i style="background:#9aa59e"></i>Avversari</span></div></div>`;
   const cols = pctCols();
   const rows = seasonAgg().sort((a,b) => { const x=a[st.sort], y=b[st.sort]; return (typeof x==='string'?x.localeCompare(y):x-y)*st.dir || b.pts-a.pts; });
@@ -1187,6 +1273,7 @@ function renderArchiveSeason(){
     <div class="kpi"><b>${fmt1(pf-pa).replace(/^(\d)/,'+$1')}</b><span>Differenza media</span></div>
     <div class="kpi"><b>${fmt1(pf)}</b><span>Punti fatti a partita</span></div>
     <div class="kpi"><b>${fmt1(pa)}</b><span>Punti subiti a partita</span></div></div>`;
+  h += teamStatsHTML(list, null);
   h += `<div class="chart">${archiveChartHTML(list, st.chartSel)}${chartHintHTML(list, st.chartSel, true)}<div class="leg2"><span><i style="background:var(--team)"></i>${esc(TEAM.name)}</span><span><i style="background:#9aa59e"></i>Avversari</span></div></div>`;
   const cols = pctCols();
   const rows = archiveSeasonAgg().sort((a,b) => { const x=a[st.sort], y=b[st.sort]; return (typeof x==='string'?x.localeCompare(y):x-y)*st.dir || b.pts-a.pts; });
