@@ -86,6 +86,9 @@ h3{font:700 17px/1.2 var(--display);margin:22px 0 10px}
 .mk i{width:8px;height:8px;border-radius:50%;display:block}
 .mk .m{background:var(--team)}
 .mk .m.lost{background:#c0432f}
+.mk .t{background:transparent;box-shadow:0 0 0 2px #d98a1b inset}
+.it.tr{border-left-color:#d98a1b}
+.legend i.lt{background:transparent;box-shadow:0 0 0 2px #d98a1b inset}
 .legend{margin:12px 0 0;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
 
@@ -354,7 +357,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
       <div class="cal-dow" aria-hidden="true"><span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span></div>
       <div class="cal-grid" id="cal-grid"></div>
     </div>
-    <p class="legend"><span><i style="background:var(--team)"></i>Partita</span><span><i style="background:#c0432f"></i>Partita persa</span></p>
+    <p class="legend"><span><i style="background:var(--team)"></i>Partita</span><span><i style="background:#c0432f"></i>Partita persa</span><span><i class="lt"></i>Allenamento</span></p>
     <div class="day" id="cal-detail"></div>
     <h3>Programma partite</h3>
     <div id="match-list"></div>
@@ -783,15 +786,18 @@ function renderCal(){
     const ms = MATCHES.filter(m=>m.date===ds);
     let mk = '', lab = [];
     ms.forEach(m => { const lost = m.result && m.result.us < m.result.them; mk += `<i class="m${lost?' lost':''}"></i>`; lab.push('partita contro '+m.opp); });
+    trainingsOn(ds).forEach(t => { mk += '<i class="t"></i>'; lab.push('allenamento '+t.start+(t.place?' '+t.place:'')); });
     h += `<button type="button" class="cd${ds===td?' today':''}${ds===cal.sel?' sel':''}" data-date="${ds}" aria-pressed="${ds===cal.sel}" aria-label="${d}${lab.length?': '+esc(lab.join(', ')):''}"><span class="n">${d}</span><span class="mk">${mk}</span></button>`;
   }
   $('#cal-grid').innerHTML = h;
   renderDay();
 }
+function trainingsOn(ds){ return WEEK_SCHEDULE.filter(t => t.date===ds && !t.match).sort((a,b)=>a.start.localeCompare(b.start)); }
 function renderDay(){
   const d = parseDate(cal.sel), ms = MATCHES.filter(m=>m.date===cal.sel);
   let h = `<h3 class="dayh">${esc(fmtLong(d))}</h3>`;
-  if(!ms.length) h += '<p class="empty">Nessuna partita in questo giorno.</p>';
+  const trs = trainingsOn(cal.sel);
+  if(!ms.length && !trs.length) h += '<p class="empty">Nessun impegno in questo giorno.</p>';
   ms.forEach(m => {
     const g = gymById(m.gym), r = m.result;
     h += `<div class="it"><p class="m-opp">${esc(m.opp)}</p>
@@ -800,6 +806,12 @@ function renderDay(){
       ${(!m.home && !r && MACCHINE[m.date])?`<p class="m-line"><b>${esc(carTxt(m.date))}</b></p>`:''}
       ${r?`<p class="m-line"><span class="res ${r.us>r.them?'w':'l'}">${r.us>r.them?'Vinta':'Persa'} ${r.us} – ${r.them}</span></p>`:''}
       ${r?'':calActions(m)}</div>`;
+  });
+  trs.forEach(t => {
+    h += `<div class="it tr"><p class="m-opp">Allenamento</p>
+      <p class="m-line">Ore ${esc(t.start)}${t.end?'\u2013'+esc(t.end):''}</p>
+      <p class="m-line">${esc(t.place||'')}</p>
+      ${PASTE[cal.sel]?`<p class="m-line"><b>🍕 Paste: ${esc(PASTE[cal.sel])}</b></p>`:''}</div>`;
   });
   $('#cal-detail').innerHTML = h;
 }
