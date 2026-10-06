@@ -297,6 +297,8 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .tmt td.prev{color:var(--muted)}
 .tmt tr.tmh td{background:var(--soft);color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:left}
 .advh{margin:16px 0 8px;font:700 15px/1.2 var(--display)}
+.radarw{max-width:340px;margin:10px auto 0;color:var(--ink,inherit)}
+.radarw svg{width:100%;height:auto;display:block}
 .advgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .advk{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:3px}
 .advk b{font:700 20px/1 var(--display)}
@@ -1665,6 +1667,41 @@ function zoneOf(sh){
   return 'mid';
 }
 const ZONES = [['rim','Sotto canestro'],['paint','Area'],['mid','Media distanza'],['c3','Tripla dall\u2019angolo'],['f3','Tripla frontale']];
+
+/* --- avanzate "alla Basketball-Reference": USG%, AST%, rimbalzi%, STL%, BLK% (minuti e totali squadra per partita) --- */
+function advExtra(name, isCur){
+  const boxes = isCur ? played().map(m=>m.box) : SEASON_ARCHIVE.matches.map(m=>m.box);
+  const e = {uN:0,uD:0,aN:0,aD:0,oN:0,oD:0,dN:0,dD:0,rN:0,rD:0,sN:0,sD:0,bN:0,bD:0};
+  boxes.forEach(bx => {
+    const me = bx.players.find(p=>p.name===name); if(!me) return;
+    const mp = minToDec(me.min); if(!mp) return;
+    const T = teamTotal(bx.players), O = bx.oppTotal || {};
+    const tm5 = bx.players.reduce((s,p)=>s+minToDec(p.min),0)/5; if(!tm5) return;
+    const fga = me.twa+me.tpa, fgm = me.twm+me.tpm, tfga = T.twa+T.tpa, tfgm = T.twm+T.tpm;
+    const poss = tfga + 0.44*T.fta - T.oreb + T.tov, o2a = O.twa||0;
+    e.uN += (fga+0.44*me.fta+me.tov)*tm5; e.uD += mp*(tfga+0.44*T.fta+T.tov);
+    e.aN += me.ast; e.aD += (mp/tm5)*tfgm - fgm;
+    e.oN += me.oreb*tm5; e.oD += mp*(T.oreb+(O.dreb||0));
+    e.dN += me.dreb*tm5; e.dD += mp*(T.dreb+(O.oreb||0));
+    e.rN += me.reb*tm5;  e.rD += mp*(T.reb+(O.reb||0));
+    e.sN += me.stl*tm5;  e.sD += mp*poss;
+    e.bN += me.blk*tm5;  e.bD += mp*o2a;
+  });
+  const r = (n,d) => d>0 ? 100*n/d : null;
+  return {usg:r(e.uN,e.uD), ast:r(e.aN,e.aD), orb:r(e.oN,e.oD), drb:r(e.dN,e.dD), trb:r(e.rN,e.rD), stl:r(e.sN,e.sD), blk:r(e.bN,e.bD)};
+}
+function radarSVG(axes){
+  const W=300, H=250, cx=150, cy=125, R=82, n=axes.length;
+  const pt = (i,f) => { const a = -Math.PI/2 + 2*Math.PI*i/n; return [cx+R*f*Math.cos(a), cy+R*f*Math.sin(a)]; };
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar delle statistiche avanzate">`;
+  [0.25,0.5,0.75,1].forEach(f => { s += `<polygon points="${axes.map((_,i)=>pt(i,f).join(',')).join(' ')}" fill="none" stroke="var(--line)" stroke-width="1"/>`; });
+  axes.forEach((a,i) => { const [x,y]=pt(i,1); s += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"/>`; });
+  const poly = axes.map((a,i)=>pt(i, Math.max(0.02, Math.min(1, (a.v||0)/a.max))).join(',')).join(' ');
+  s += `<polygon points="${poly}" fill="var(--team)" fill-opacity=".28" stroke="var(--team)" stroke-width="2"/>`;
+  axes.forEach((a,i) => { const [x,y]=pt(i,1.2), an = x<cx-6?'end':x>cx+6?'start':'middle';
+    s += `<text x="${x}" y="${y-2}" text-anchor="${an}" font-size="11" font-weight="700" fill="currentColor">${a.l}</text><text x="${x}" y="${y+11}" text-anchor="${an}" font-size="11" fill="var(--muted)">${a.v==null?'–':fmt1(a.v)+(a.u||'')}</text>`; });
+  return s + '</svg>';
+}
 function advHTML(name, isCur){
   const t = advAgg(name, isCur);
   if(t.min < 30) return '<p class="fine" style="padding:10px 0 0">Statistiche avanzate non ancora disponibili: servono pi\u00f9 minuti giocati.</p>';
@@ -1677,13 +1714,25 @@ function advHTML(name, isCur){
   let h = `<h4 class="advh">Statistiche avanzate</h4><div class="advgrid">
     ${tile(P(ts),'TS%')}${tile(P(efg),'eFG%')}${tile(t.tov?fmt1(t.ast/t.tov):'\u2013','Assist / palle perse')}
     ${tile(p36(t.pts),'Punti / 36 min')}${tile(p36(t.reb),'Rimbalzi / 36 min')}${tile(p36(t.ast),'Assist / 36 min')}</div>`;
+  const X = advExtra(name, isCur), fgaT = t.twa+t.tpa;
+  const pv = v => v==null ? '\u2013' : Math.round(v)+'%';
+  const P2 = v => v==null ? '\u2013' : fmt1(v)+'%';
+  const tovp = (fgaT+0.44*t.fta+t.tov) ? 100*t.tov/(fgaT+0.44*t.fta+t.tov) : null;
+  h += `<div class="advgrid" style="margin-top:8px">
+    ${tile(fgaT?pv(100*t.fta/fgaT):'\u2013','FTr (liberi / tiri)')}${tile(fgaT?pv(100*t.tpa/fgaT):'\u2013','3PAr (quota di triple)')}${tile(P2(tovp),'TOV% (palle perse)')}
+    ${tile(P2(X.orb),'ORB% (rimb. attacco)')}${tile(P2(X.drb),'DRB% (rimb. difesa)')}${tile(P2(X.trb),'TRB% (rimb. totali)')}
+    ${tile(P2(X.ast),'AST% (assist su canestri)')}${tile(P2(X.usg),'USG% (uso del pallone)')}${tile(X.stl==null?'\u2013':fmt1(X.stl)+'% \u00b7 '+fmt1(X.blk||0)+'%','STL% \u00b7 BLK%')}</div>
+    <div class="radarw">${radarSVG([{l:'TS%',v:ts==null?null:ts*100,max:70,u:'%'},{l:'eFG%',v:efg==null?null:efg*100,max:65,u:'%'},{l:'USG%',v:X.usg,max:35,u:'%'},{l:'AST%',v:X.ast,max:30,u:'%'},{l:'TRB%',v:X.trb,max:25,u:'%'},{l:'Difesa',v:X.stl==null?null:X.stl+(X.blk||0),max:8,u:'%'}])}</div>`;
+  if(t.shots.length){
+    h += `<div class="shotwrap" style="margin-top:8px">${shotCourtSVG(t.shots)}</div><div class="shotleg"><span><i class="mk"></i>Canestro</span><span><i class="ms"></i>Errore</span></div>`;
+  }
   if(t.shots.length >= 5){
     const z = {}; ZONES.forEach(k => { z[k[0]] = {m:0,a:0}; });
     t.shots.forEach(sh => { const k = zoneOf(sh); z[k].a++; if(sh.made) z[k].m++; });
     h += `<div class="zones">` + ZONES.filter(k => z[k[0]].a>0).map(k => { const o=z[k[0]], pc=Math.round(100*o.m/o.a);
       return `<div class="zrow"><span class="zn">${k[1]}</span><span class="zb"><i style="width:${pc}%"></i></span><span class="zv">${o.m}/${o.a} \u00b7 ${pc}%</span></div>`; }).join('') + `</div>`;
   }
-  h += `<p class="fine" style="padding:8px 0 0">TS% = efficienza complessiva al tiro (2, 3 e liberi insieme). eFG% = percentuale dal campo con il tiro da 3 contato 1,5. \u00ab/ 36 min\u00bb = valori ogni 36 minuti in campo. Zone di tiro stimate dalla posizione dei tiri.</p>`;
+  h += `<p class="fine" style="padding:8px 0 0">TS% = efficienza complessiva al tiro (2, 3 e liberi insieme). eFG% = percentuale dal campo con il tiro da 3 contato 1,5. \u00ab/ 36 min\u00bb = valori ogni 36 minuti in campo. Zone di tiro stimate dalla posizione dei tiri. USG% = quota di azioni finite dal giocatore mentre \u00e8 in campo; AST%, ORB%, DRB%, TRB%, STL% e BLK% sono calcolate sui minuti giocati rispetto ai totali di squadra. Radar: pi\u00f9 l\u2019area \u00e8 ampia, meglio \u00e8 (scale fisse, \u00abDifesa\u00bb = STL% + BLK%).</p>`;
   return h;
 }
 function rosterDetailHTML(p, a, cur){
