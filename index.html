@@ -322,6 +322,22 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,8px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.gr-ctl{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.gr-ctl select{flex:1 1 140px;min-width:0;border:1.5px solid var(--line);background:var(--card);color:inherit;border-radius:10px;padding:8px 10px;font:inherit;font-size:14px}
+.gr-ven{display:flex;gap:8px;margin-bottom:10px}
+.gr-ven .chip[aria-pressed="true"]{background:var(--team);border-color:var(--team);color:#fff}
+.gr-m{display:grid;grid-template-columns:54px 1fr auto;gap:2px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.gr-m .d{grid-row:span 2;font-size:12px;color:var(--muted,#6b7280);line-height:1.3}
+.gr-m .tm{display:flex;justify-content:space-between;gap:8px}
+.gr-m .w{font-weight:700}
+.gr-m .sc{font-variant-numeric:tabular-nums}
+.gr-m.us{background:var(--soft);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}
+.gr-m .wl{grid-row:span 2;font-weight:800;font-size:13px;border-radius:6px;padding:2px 7px}
+.gr-m .wl.W{background:#1f9d55;color:#fff}.gr-m .wl.L{background:#d64545;color:#fff}.gr-m .wl.N{color:var(--muted,#6b7280)}
+.gr-form{display:flex;gap:4px;margin:2px 0 8px;align-items:center;font-size:13px}
+.gr-form b{border-radius:5px;padding:1px 6px;color:#fff;font-size:12px}
+.gr-form b.W{background:#1f9d55}.gr-form b.L{background:#d64545}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -479,6 +495,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 
 <script src="dati-settimana.js"></script>
 <script src="dati-partite.js"></script>
+<script src="dati-girone.js"></script>
 <script>
 (function(){
 'use strict';
@@ -499,7 +516,8 @@ const PASTE = window.AICS.PASTE || {};
 const MACCHINE = window.AICS.MACCHINE || {};
 const carTxt = d => MACCHINE[d] ? '🚗 Macchina: ' + MACCHINE[d].filter(Boolean).join(', ') : '';
 const carHTML = d => MACCHINE[d] ? `<div class="wpz">${esc(carTxt(d))}</div>` : '';
-const { WEEK_SCHEDULE, MATCHES, MATCH_EXTRA, SEASON_ARCHIVE, STANDINGS, STANDINGS_SOURCE } = window.AICS;
+const GIRONE = window.AICS.GIRONE || [], RISULTATI = window.AICS.RISULTATI || {};
+  const { WEEK_SCHEDULE, MATCHES, MATCH_EXTRA, SEASON_ARCHIVE, STANDINGS, STANDINGS_SOURCE } = window.AICS;
 const DEMO = false;
 
 const TEAM = { name:'AICS Junior Basket Forlì', season:'2026/2027 · Divisione Regionale 1', color:'#1d5fbf', tz:'Europe/Rome' };
@@ -1556,6 +1574,43 @@ function renderPList(){
        <span class="t">${esc(p.title)}</span><span class="s">${esc(p.sub||'')}</span></button>`).join('');
 }
 
+
+/* --- risultati e calendario del girone --- */
+const gr = {r:null, team:'', ven:'all'};
+function grNow(){
+  const td = iso(todayD());
+  const played = GIRONE.filter(m=>RISULTATI[m.g]).map(m=>m.r);
+  return played.length ? Math.max(...played) : 1;
+}
+function renderGirone(){
+  if(!GIRONE.length) return '';
+  const teams = STANDINGS.map(t=>t.team).sort((a,b)=>a.localeCompare(b));
+  if(gr.r===null) gr.r = grNow();
+  const opt = (v,l,sel) => `<option value="${esc(String(v))}"${sel?' selected':''}>${esc(l)}</option>`;
+  const rounds = [...new Set(GIRONE.map(m=>m.r))];
+  let h = `<h3 style="margin-top:22px">Risultati e calendario del girone</h3><div class="gr-ctl">`;
+  h += `<select id="gr-r" aria-label="Giornata">${opt('all','Tutte le giornate',gr.r==='all')}${rounds.map(r=>opt(r, r<=15?`${r}\u00aa andata`:`${r-15}\u00aa ritorno`, gr.r===r)).join('')}</select>`;
+  h += `<select id="gr-t" aria-label="Squadra">${opt('','Tutte le squadre',!gr.team)}${teams.map(t=>opt(t,t,gr.team===t)).join('')}</select></div>`;
+  if(gr.team) h += `<div class="gr-ven">${[['all','Tutte'],['h','Casa'],['a','Trasferta']].map(([k,l])=>`<button type="button" class="chip" data-gv="${k}" aria-pressed="${gr.ven===k}">${l}</button>`).join('')}</div>`;
+  let ms = GIRONE.filter(m => (gr.r==='all' || m.r===gr.r) && (!gr.team || (m.h===gr.team && gr.ven!=='a') || (m.a===gr.team && gr.ven!=='h')));
+  ms.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  if(gr.team){
+    const f = ms.filter(m=>RISULTATI[m.g]).map(m=>{ const [x,y]=RISULTATI[m.g]; const mine = m.h===gr.team?x:y, th = m.h===gr.team?y:x; return mine>th?'W':'L'; });
+    const W = f.filter(x=>x==='W').length, pf = ms.filter(m=>RISULTATI[m.g]).reduce((s,m)=>s+(m.h===gr.team?RISULTATI[m.g][0]:RISULTATI[m.g][1]),0), ps = ms.filter(m=>RISULTATI[m.g]).reduce((s,m)=>s+(m.h===gr.team?RISULTATI[m.g][1]:RISULTATI[m.g][0]),0);
+    if(f.length) h += `<div class="gr-form">${f.slice(-8).map(x=>`<b class="${x}">${x==='W'?'V':'P'}</b>`).join('')}<span style="margin-left:6px">${W}V\u2013${f.length-W}P \u00b7 PF ${pf} \u00b7 PS ${ps}</span></div>`;
+  }
+  if(!ms.length) h += `<p class="fine" style="padding:0">Nessuna partita con questi filtri.</p>`;
+  h += ms.map(m => {
+    const r = RISULTATI[m.g];
+    const us = m.h.startsWith('AICS')||m.a.startsWith('AICS');
+    let wl = '';
+    if(gr.team){ if(r){ const mine = m.h===gr.team?r[0]:r[1], th = m.h===gr.team?r[1]:r[0]; wl = `<span class="wl ${mine>th?'W':'L'}">${mine>th?'V':'P'}</span>`; } else wl = `<span class="wl N">\u2013</span>`; }
+    const row = (t,s,win) => `<div class="tm${win?' w':''}"><span>${esc(t)}</span><span class="sc">${s==null?'':s}</span></div>`;
+    return `<div class="gr-m${us?' us':''}"><div class="d">${fmtShort(m.date)}<br>${esc(m.time)}</div><div>${row(m.h,r?r[0]:null,r&&r[0]>r[1])}${row(m.a,r?r[1]:null,r&&r[1]>r[0])}</div>${wl||'<span></span>'}</div>`;
+  }).join('');
+  return h;
+}
+
 /* --- classifica --- */
 function renderClassifica(){
   const started = STANDINGS.some(t=>t.g>0);
@@ -1570,6 +1625,7 @@ function renderClassifica(){
   h += `</tbody></table></div>`;
   h += `<ul class="zleg"><li><i class="z-bye"></i>1ª–2ª: direttamente alle semifinali playoff</li><li><i class="z-pi"></i>3ª–6ª: play-in (gara secca) per accedere alle semifinali</li><li><i class="z-po"></i>15ª: playout incrociato con la 15ª dell'altro girone</li><li><i class="z-rel"></i>16ª: retrocessione diretta in Divisione Regionale 2</li></ul>${started?'':'<p class="fine" style="padding:0 0 6px">I colori compariranno appena ci sarà una classifica vera.</p>'}`;
   h += `<p class="fine" style="padding:0">Aggiornata al ${esc(STANDINGS_SOURCE.date)} \u00b7 Fonte: <a href="${esc(STANDINGS_SOURCE.url)}" target="_blank" rel="noopener">${esc(STANDINGS_SOURCE.label)}</a></p>`;
+  h += renderGirone();
   $('#classifica-body').innerHTML = h;
 }
 
@@ -1804,6 +1860,11 @@ function init(){
   });
 
   $('#tabs').addEventListener('click', e => { const b=e.target.closest('button'); if(b) showTab(b.dataset.tab); });
+  $('#classifica-body').addEventListener('change', e => {
+    if(e.target.id==='gr-r'){ gr.r = e.target.value==='all'?'all':+e.target.value; renderClassifica(); }
+    if(e.target.id==='gr-t'){ gr.team = e.target.value; if(!gr.team) gr.ven='all'; else if(gr.r!=='all') gr.r='all'; renderClassifica(); }
+  });
+  $('#classifica-body').addEventListener('click', e => { const b=e.target.closest('[data-gv]'); if(b){ gr.ven=b.dataset.gv; renderClassifica(); } });
   $('#cal-grid').addEventListener('click', e => { const b=e.target.closest('button'); if(b){ cal.sel=b.dataset.date; renderCal(); } });
   $('#cal-prev').addEventListener('click', () => { cal.m--; if(cal.m<0){cal.m=11; cal.y--;} renderCal(); });
   $('#cal-next').addEventListener('click', () => { cal.m++; if(cal.m>11){cal.m=0; cal.y++;} renderCal(); });
