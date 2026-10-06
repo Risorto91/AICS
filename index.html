@@ -341,6 +341,12 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .gr-form{display:flex;gap:4px;margin:2px 0 8px;align-items:center;font-size:13px}
 .gr-form b{border-radius:5px;padding:1px 6px;color:#fff;font-size:12px}
 .gr-form b.W{background:#1f9d55}.gr-form b.L{background:#d64545}
+.legend{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}
+.legend h3{margin:10px 0 0}
+.legend h4{margin:14px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--team-text,var(--team))}
+.legend dl{margin:0}
+.legend dt{font-weight:700;font-size:13.5px;margin-top:8px}
+.legend dd{margin:1px 0 0;font-size:13px;color:var(--muted);line-height:1.4}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -409,6 +415,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
     <p class="pcttoggle"><button type="button" class="chip" id="pct-toggle" aria-pressed="false">% Percentuali al tiro</button></p>
     <div id="stats-match"></div>
     <div id="stats-season" hidden></div>
+    <div id="legend-stats"></div>
   </section>
 
   <section id="tab-schemi" aria-label="Schemi" hidden>
@@ -465,6 +472,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
   <section id="tab-classifica" aria-label="Classifica" hidden>
     <h2>Classifica</h2>
     <div id="classifica-body"></div>
+    <div id="legend-class"></div>
   </section>
 
   <section id="tab-rosa" aria-label="Rosa" hidden>
@@ -472,6 +480,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
     <p class="fine" style="padding:0 0 10px" id="roster-season"></p>
     <div class="roster" id="roster-list"></div>
     <div id="roster-detail"></div>
+    <div id="legend-rosa"></div>
   </section>
 
 </main>
@@ -1123,11 +1132,17 @@ const TEAM_ROWS = [
   ['Tiri liberi (%)','ft','pct',1,(x)=>x.fta?x.ftm/x.fta:null,true],
   ['eFG% (tiro da 3 = 1,5)','efg','pct',1,(x)=>(x.twa+x.tpa)?(x.twm+1.5*x.tpm)/(x.twa+x.tpa):null,true],
   ['TS% (efficienza complessiva)','ts','pct',1,(x)=>{const f=x.twa+x.tpa+0.44*x.fta;return f?x.pts/(2*f):null;},true],
+  ['Efficienza (ogni 100 possessi)',null],
+  ['Punti per 100 possessi (OER; colonna Avv. = DER)','rtg','num',1,(x,y,c)=>x.pts/c.P*100,true],
+  ['Differenza (NET = OER \u2212 DER)','net','num',1,(x,y,c)=>(x.pts-y.pts)/c.P*100,false],
   ['Ritmo e possessi',null],
   ['Possessi a partita','poss','num',0,(x,y,c,n)=>c.P/n,false],
-  ['Punti ogni 100 possessi','rtg','num',1,(x,y,c)=>x.pts/c.P*100,true],
   ['Palle perse (% possessi)','tovp','pct',-1,(x)=>{const d=x.twa+x.tpa+0.44*x.fta+x.tov;return d?x.tov/d:null;},false],
   ['Rimbalzi offensivi (%)','orebp','pct',1,(x,y)=>(x.oreb+y.dreb)?x.oreb/(x.oreb+y.dreb):null,true],
+  ['Rimbalzi difensivi (%)','drebp','pct',1,(x,y)=>(x.dreb+y.oreb)?x.dreb/(x.dreb+y.oreb):null,true],
+  ['Quota di triple (3PAr)','tpar','pct',0,(x)=>(x.twa+x.tpa)?x.tpa/(x.twa+x.tpa):null,true],
+  ['Punti per tiro da 2','pp2','num',1,(x)=>x.twa?2*x.twm/x.twa:null,true],
+  ['Punti per tiro da 3','pp3','num',1,(x)=>x.tpa?3*x.tpm/x.tpa:null,true],
   ['Tiri liberi tentati / tiri','ftr','pct',1,(x)=>(x.twa+x.tpa)?x.fta/(x.twa+x.tpa):null,true],
   ['A partita',null],
   ['Rimbalzi','reb','num',1,(x,y,c,n)=>x.reb/n,true],
@@ -1147,6 +1162,23 @@ function teamMetric(row, A, side){
   return (v==null || !isFinite(v)) ? null : v;
 }
 function teamFmt(row, v){ return v==null ? '–' : (row[2]==='pct' ? Math.round(v*100)+'%' : fmt1(v)); }
+
+function trendSVG(list){
+  const L = list.filter(m=>m.box && m.box.oppTotal).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(!L.length) return '';
+  const pts = L.map(m => { const T = teamTotal(m.box.players), P = (T.twa+T.tpa)+0.44*T.fta-T.oreb+T.tov; return {l:fmtShort(m.date), o:T.pts/P*100, d:m.box.oppTotal.pts/P*100}; });
+  const W=320, H=190, l=34, r=12, t=14, b=34;
+  const vals = pts.flatMap(p=>[p.o,p.d]), lo = Math.floor(Math.min(...vals)/10)*10-(pts.length<2?10:0), hi = Math.ceil(Math.max(...vals)/10)*10+(pts.length<2?10:0);
+  const X = i => pts.length===1 ? (l+W-r)/2 : l + (W-l-r)*i/(pts.length-1), Y = v => t + (H-t-b)*(1-(v-lo)/(hi-lo||1));
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Andamento di attacco e difesa partita per partita">`;
+  for(let v=lo; v<=hi; v+=(hi-lo)/4){ s += `<line x1="${l}" x2="${W-r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${l-5}" y="${Y(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${Math.round(v)}</text>`; }
+  [['o','var(--team)'],['d','#9aa59e']].forEach(([k,c]) => {
+    if(pts.length>1) s += `<polyline fill="none" stroke="${c}" stroke-width="2.5" points="${pts.map((p,i)=>X(i)+','+Y(p[k])).join(' ')}"/>`;
+    pts.forEach((p,i) => { s += `<circle cx="${X(i)}" cy="${Y(p[k])}" r="4" fill="${c}"/><text x="${X(i)}" y="${Y(p[k])-8}" text-anchor="middle" font-size="10" font-weight="700" fill="currentColor">${Math.round(p[k])}</text>`; });
+  });
+  pts.forEach((p,i) => { s += `<text x="${X(i)}" y="${H-16}" text-anchor="middle" font-size="10" fill="var(--muted)">${esc(p.l)}</text><text x="${X(i)}" y="${H-4}" text-anchor="middle" font-size="10" font-weight="700" fill="${p.o-p.d>=0?'#1f9d55':'#d64545'}">${p.o-p.d>=0?'+':''}${Math.round(p.o-p.d)}</text>`; });
+  return s + '</svg><div class="leg2"><span><i style="background:var(--team)"></i>Attacco (OER)</span><span><i style="background:#9aa59e"></i>Difesa (DER, punti subiti)</span></div><p class="fine" style="padding:4px 0 0">Punti segnati e subiti ogni 100 possessi, partita per partita. Sotto ogni data la differenza (NET): in verde se positiva.</p>';
+}
 function teamStatsHTML(list, prevList){
   const A = teamAgg(list); if(!A.n) return '';
   const B = prevList ? teamAgg(prevList) : null;
@@ -1160,11 +1192,12 @@ function teamStatsHTML(list, prevList){
     const a = teamMetric(row, A, 't'), o = teamMetric(row, A, 'o'), p = showPrev ? teamMetric(row, B, 't') : null;
     let better = null; if(a!=null && o!=null && row[3]!==0 && Math.abs(a-o)>1e-9) better = ((a>o)===(row[3]>0)) ? 'a' : 'o';
     h += `<tr><td>${esc(row[0])}</td><td class="${better==='a'?'win':''}">${teamFmt(row,a)}</td><td class="${better==='o'?'win':''}">${teamFmt(row,o)}</td>${showPrev?`<td class="prev">${teamFmt(row,p)}</td>`:''}</tr>`;
-    if(a!=null && p!=null && p!==0 && row[3]!==0 && ['p2','p3','ft','efg','ts','rtg','tovp','orebp','reb','ast','stl','tov'].includes(row[1])){
+    if(a!=null && p!=null && p!==0 && row[3]!==0 && ['p2','p3','ft','efg','ts','rtg','net','tovp','orebp','drebp','reb','ast','stl','tov'].includes(row[1])){
       changes.push({ label:row[0].replace(/ \(.*\)/,''), rel:((a-p)/Math.abs(p))*row[3], a:teamFmt(row,a), p:teamFmt(row,p) });
     }
   });
   h += `</tbody></table></div>`;
+  h += `<h4 class="advh" style="margin-top:14px">Andamento partita per partita</h4><div class="chart">${trendSVG(list)}</div>`;
   if(A.n >= 4 && changes.length){
     const up = changes.filter(c=>c.rel>0.08).sort((x,y)=>y.rel-x.rel).slice(0,2);
     const down = changes.filter(c=>c.rel<-0.08).sort((x,y)=>x.rel-y.rel).slice(0,2);
@@ -1623,6 +1656,20 @@ function computeTable(){
     [[m.h,r[0],r[1]],[m.a,r[1],r[0]]].forEach(([n,f,s]) => { const t=get(n); t.g++; t.pf+=f; t.ps+=s; if(f>s){t.v++; t.pt+=2;} else t.p++; }); });
   return Object.values(T);
 }
+
+/* --- legenda degli acronimi --- */
+const LEGEND = [
+ ['Classifica',[['G, V, P','Partite giocate, vinte, perse.'],['PF, PS','Punti fatti e punti subiti.'],['Pt','Punti in classifica: 2 per ogni vittoria, 0 per la sconfitta. A parità la squadra con la miglior differenza canestri (PF − PS) è davanti.'],['Zone colorate','1ª–2ª: direttamente alle semifinali playoff · 3ª–6ª: play-in · 15ª: playout · 16ª: retrocessione diretta.']]],
+ ['Tabellino della partita',[['Min','Minuti giocati.'],['Pt','Punti segnati.'],['2P, 3P, TL','Canestri realizzati / tentati da 2, da 3 e tiri liberi. Con «% Percentuali» attivo diventano percentuali.'],['RO, RD, RT','Rimbalzi offensivi, difensivi, totali.'],['As','Assist (passaggi che portano direttamente a un canestro).'],['PP','Palle perse.'],['Rb / St','Palle recuperate (rubate) / stoppate.'],['Fal / FS','Falli commessi / falli subiti.'],['Val (PIR)','Valutazione: somma di ciò che il giocatore fa di positivo (punti, rimbalzi, assist, recuperi, stoppate, falli subiti) meno gli aspetti negativi (errori al tiro, palle perse, falli).'],['Eff','Indice di efficienza: simile alla valutazione, calcolato solo con tiri, rimbalzi, assist, recuperi, stoppate e palle perse.'],['+/-','Differenza punti della squadra mentre il giocatore è in campo.'],['TS (quarto)','Tempo supplementare.']]],
+ ['Percentuali di tiro',[['FG%','Percentuale dal campo: canestri su tiri tentati (esclusi i liberi).'],['2P%, 3P%, TL%','Percentuale da 2, da 3 e ai tiri liberi.'],['eFG%','FG% «corretta»: la tripla vale 1,5 canestri, così si confronta chi tira molte triple con chi tira da 2.'],['TS%','True Shooting: efficienza al tiro complessiva (2, 3 e liberi). È la misura più completa di quanto un giocatore segni bene.'],['FTr','Tiri liberi tentati diviso tiri dal campo tentati: misura quanto si va in lunetta.'],['3PAr','Quota di triple sul totale dei tiri dal campo.'],['Punti per tiro da 2 / da 3','Punti medi ricavati da ogni tentativo da 2 o da 3.']]],
+ ['Possessi ed efficienza di squadra',[['Possesso','Un’azione offensiva. Stima: tiri dal campo + 0,44 × tiri liberi − rimbalzi offensivi + palle perse. È un valore stimato, non conteggiato.'],['OER','Offensive Rating: punti segnati ogni 100 possessi. Più alto è meglio.'],['DER','Defensive Rating: punti subiti ogni 100 possessi. Più basso è meglio.'],['NET','OER − DER: quanti punti ogni 100 possessi guadagniamo (o perdiamo) rispetto all’avversario.'],['Quattro fattori','Cosa decide una partita: tirare bene (eFG%), non perdere palloni (TOV%), prendere rimbalzi in attacco (ORB%), andare in lunetta (FTr).'],['TOV%','Palle perse ogni 100 azioni (tiri + 0,44 liberi + palle perse). Più basso è meglio.'],['ORB%, DRB%, TRB%','Percentuale dei rimbalzi disponibili catturati: in attacco, in difesa, totali (per il giocatore: mentre è in campo).']]],
+ ['Avanzate del giocatore',[['/ 36 min','Statistica riportata a 36 minuti in campo, per confrontare chi gioca molto con chi gioca poco.'],['USG%','Usage: quota delle azioni di squadra (tiri, liberi, palle perse) concluse dal giocatore mentre è in campo. Sopra il 25% è un riferimento offensivo.'],['AST%','Percentuale dei canestri dei compagni, mentre è in campo, su cui ha fatto l’assist.'],['STL%, BLK%','Recuperi e stoppate ogni 100 possessi (o tiri da 2) avversari mentre è in campo.'],['Assist / palle perse','Rapporto tra assist e palle perse: sopra 2 è ottimo.'],['Difesa (radar)','STL% + BLK%.'],['Radar','Più l’area colorata è ampia, meglio è. Le scale sono fisse (non confrontano i giocatori tra loro).']]],
+ ['Cose da sapere',[['Stime','Possessi, OER, DER e le avanzate sono stime dai referti: servono per confrontare nel tempo, non come numeri ufficiali.'],['Dati avversari','Assist, recuperi e palle perse dell’avversario non sono rilevati in modo affidabile: non vengono confrontati.'],['Campione piccolo','Con poche partite le percentuali oscillano molto: diventano affidabili da 4–5 partite in poi.'],['Stagione mostrata','Per le avanzate dei giocatori, fino alla 4ª partita si usano i dati della stagione scorsa; dalla 5ª quelli di questa stagione.']]]
+];
+function legendHTML(only){
+  const groups = only ? LEGEND.filter(g=>only.includes(g[0])) : LEGEND;
+  return `<div class="legend"><h3>Legenda</h3>${groups.map(g=>`<h4>${esc(g[0])}</h4><dl>${g[1].map(x=>`<dt>${esc(x[0])}</dt><dd>${esc(x[1])}</dd>`).join('')}</dl>`).join('')}</div>`;
+}
 /* --- classifica --- */
 function renderClassifica(){
   const table = GIRONE.length ? computeTable() : STANDINGS;
@@ -1908,6 +1955,9 @@ function init(){
   renderNext(); renderMatchList(); renderGyms(); renderStats();
   prepPlays(); renderCats(); loadPlay(PLAYS.find(p=>p.cat===pstate.cat) || PLAYS[0]);
   renderClassifica();
+  $('#legend-stats').innerHTML = legendHTML();
+  $('#legend-rosa').innerHTML = legendHTML();
+  $('#legend-class').innerHTML = legendHTML(['Classifica']);
   renderRoster();
   renderHome();
 
