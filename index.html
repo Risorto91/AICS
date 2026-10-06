@@ -335,6 +335,7 @@ table.st{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;f
 .gr-m.us{background:var(--soft);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}
 .gr-m .wl{grid-row:span 2;font-weight:800;font-size:13px;border-radius:6px;padding:2px 7px}
 .gr-m .wl.W{background:#1f9d55;color:#fff}.gr-m .wl.L{background:#d64545;color:#fff}.gr-m .wl.N{color:var(--muted,#6b7280)}
+.gr-h{margin:16px 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--team-text,var(--team))}
 .gr-form{display:flex;gap:4px;margin:2px 0 8px;align-items:center;font-size:13px}
 .gr-form b{border-radius:5px;padding:1px 6px;color:#fff;font-size:12px}
 .gr-form b.W{background:#1f9d55}.gr-form b.L{background:#d64545}
@@ -1584,7 +1585,7 @@ function grNow(){
 }
 function renderGirone(){
   if(!GIRONE.length) return '';
-  const teams = STANDINGS.map(t=>t.team).sort((a,b)=>a.localeCompare(b));
+  const teams = [...new Set(GIRONE.flatMap(m=>[m.h,m.a]))].sort((a,b)=>a.localeCompare(b));
   if(gr.r===null) gr.r = grNow();
   const opt = (v,l,sel) => `<option value="${esc(String(v))}"${sel?' selected':''}>${esc(l)}</option>`;
   const rounds = [...new Set(GIRONE.map(m=>m.r))];
@@ -1600,21 +1601,31 @@ function renderGirone(){
     if(f.length) h += `<div class="gr-form">${f.slice(-8).map(x=>`<b class="${x}">${x==='W'?'V':'P'}</b>`).join('')}<span style="margin-left:6px">${W}V\u2013${f.length-W}P \u00b7 PF ${pf} \u00b7 PS ${ps}</span></div>`;
   }
   if(!ms.length) h += `<p class="fine" style="padding:0">Nessuna partita con questi filtri.</p>`;
+  let lastR = null;
   h += ms.map(m => {
+    const hd = (gr.r==='all' && !gr.team && m.r!==lastR) ? `<h4 class="gr-h">${m.r<=15?m.r+'\u00aa andata':(m.r-15)+'\u00aa ritorno'}</h4>` : ''; lastR = m.r;
     const r = RISULTATI[m.g];
     const us = m.h.startsWith('AICS')||m.a.startsWith('AICS');
     let wl = '';
     if(gr.team){ if(r){ const mine = m.h===gr.team?r[0]:r[1], th = m.h===gr.team?r[1]:r[0]; wl = `<span class="wl ${mine>th?'W':'L'}">${mine>th?'V':'P'}</span>`; } else wl = `<span class="wl N">\u2013</span>`; }
     const row = (t,s,win) => `<div class="tm${win?' w':''}"><span>${esc(t)}</span><span class="sc">${s==null?'':s}</span></div>`;
-    return `<div class="gr-m${us?' us':''}"><div class="d">${fmtShort(m.date)}<br>${esc(m.time)}</div><div>${row(m.h,r?r[0]:null,r&&r[0]>r[1])}${row(m.a,r?r[1]:null,r&&r[1]>r[0])}</div>${wl||'<span></span>'}</div>`;
+    return hd + `<div class="gr-m${us?' us':''}"><div class="d">${fmtShort(m.date)}<br>${esc(m.time)}</div><div>${row(m.h,r?r[0]:null,r&&r[0]>r[1])}${row(m.a,r?r[1]:null,r&&r[1]>r[0])}</div>${wl||'<span></span>'}</div>`;
   }).join('');
   return h;
 }
 
+function computeTable(){
+  const T = {};
+  const get = n => T[n] || (T[n] = {team:n, us:n.startsWith('AICS'), g:0, v:0, p:0, pf:0, ps:0, pt:0});
+  GIRONE.forEach(m => { get(m.h); get(m.a); const r = RISULTATI[m.g]; if(!r) return;
+    [[m.h,r[0],r[1]],[m.a,r[1],r[0]]].forEach(([n,f,s]) => { const t=get(n); t.g++; t.pf+=f; t.ps+=s; if(f>s){t.v++; t.pt+=2;} else t.p++; }); });
+  return Object.values(T);
+}
 /* --- classifica --- */
 function renderClassifica(){
-  const started = STANDINGS.some(t=>t.g>0);
-  const rows = STANDINGS.slice().sort((a,b) => started ? (b.pt-a.pt || (b.pf-b.ps)-(a.pf-a.ps)) : a.team.localeCompare(b.team));
+  const table = GIRONE.length ? computeTable() : STANDINGS;
+  const started = table.some(t=>t.g>0);
+  const rows = table.slice().sort((a,b) => started ? (b.pt-a.pt || (b.pf-b.ps)-(a.pf-a.ps)) : a.team.localeCompare(b.team));
   let h = '';
   if(!started) h += `<p class="warn">Il campionato non \u00e8 ancora iniziato (si parte il 2 ottobre): tutte le squadre sono ancora a quota zero, quindi l'ordine qui sotto \u00e8 solo alfabetico, non una classifica vera.</p>`;
   h += `<div class="tscroll"><table class="st"><thead><tr><th>Squadra</th><th>G</th><th>V</th><th>P</th><th>PF</th><th>PS</th><th>Pt</th></tr></thead><tbody>`;
@@ -1624,7 +1635,7 @@ function renderClassifica(){
   });
   h += `</tbody></table></div>`;
   h += `<ul class="zleg"><li><i class="z-bye"></i>1ª–2ª: direttamente alle semifinali playoff</li><li><i class="z-pi"></i>3ª–6ª: play-in (gara secca) per accedere alle semifinali</li><li><i class="z-po"></i>15ª: playout incrociato con la 15ª dell'altro girone</li><li><i class="z-rel"></i>16ª: retrocessione diretta in Divisione Regionale 2</li></ul>${started?'':'<p class="fine" style="padding:0 0 6px">I colori compariranno appena ci sarà una classifica vera.</p>'}`;
-  h += `<p class="fine" style="padding:0">Aggiornata al ${esc(STANDINGS_SOURCE.date)} \u00b7 Fonte: <a href="${esc(STANDINGS_SOURCE.url)}" target="_blank" rel="noopener">${esc(STANDINGS_SOURCE.label)}</a></p>`;
+  h += `<p class="fine" style="padding:0">${GIRONE.length?`Calcolata automaticamente dai risultati del girone (${GIRONE.filter(m=>RISULTATI[m.g]).length} partite giocate) \u00b7 A parit\u00e0 di punti conta la differenza canestri \u00b7 Fonte risultati: <a href="${esc(STANDINGS_SOURCE.url)}" target="_blank" rel="noopener">${esc(STANDINGS_SOURCE.label)}</a>`:`Aggiornata al ${esc(STANDINGS_SOURCE.date)} \u00b7 Fonte: <a href="${esc(STANDINGS_SOURCE.url)}" target="_blank" rel="noopener">${esc(STANDINGS_SOURCE.label)}</a>`}</p>`;
   h += renderGirone();
   $('#classifica-body').innerHTML = h;
 }
