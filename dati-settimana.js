@@ -22,7 +22,13 @@ window.AICS.WEEK_SCHEDULE = [
   { date:'2026-10-12', start:'20:00', end:'22:00', place:'Palestra Romiti' },
   { date:'2026-10-13', start:'21:00', end:'22:30', place:'Palestra Orceoli' },
   { date:'2026-10-16', start:'21:00', end:'22:30', place:'Palestra Viroli' },
-  { date:'2026-10-18', start:'19:00', end:'',      place:'PalaCus \u2013 Campo A', extra:'AICS vs Audace Bombers BO', match:true }
+  { date:'2026-10-18', start:'19:00', end:'',      place:'PalaCus \u2013 Campo A', extra:'AICS vs Audace Bombers BO', match:true },
+
+  /* Settimana 19-25 ottobre */
+  { date:'2026-10-20', start:'21:00', end:'22:30', place:'Palestra Romiti' },
+  { date:'2026-10-21', start:'21:00', end:'23:00', place:'Palestra Monti' },
+  { date:'2026-10-23', start:'20:00', end:'22:00', place:'Palestra Romiti' },
+  { date:'2026-10-24', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Guelfo Basket', match:true }
 ];
 
 /* =====================================================================
