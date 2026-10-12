@@ -535,6 +535,13 @@ function sun(w){ const d=todayD(); const off=((7-d.getDay())%7)||7; d.setDate(d.
 const PASTE = window.AICS.PASTE || {};
 const MACCHINE = window.AICS.MACCHINE || {};
 const carTxt = d => MACCHINE[d] ? '🚗 Macchina: ' + MACCHINE[d].filter(Boolean).join(', ') : '';
+const RITROVO = window.AICS.RITROVO || null;
+function ritrovoTime(m){
+  if(!RITROVO || !m || m.home || !RITROVO.minuti[m.gym]) return '';
+  const p = String(m.time).split(':'), t = (+p[0])*60 + (+p[1]) - RITROVO.prima - RITROVO.minuti[m.gym], f = Math.floor(t/5)*5;
+  return pad(Math.floor(f/60)) + ':' + pad(f%60);
+}
+const ritTxt = m => { const t = ritrovoTime(m); return t ? '\ud83d\udd52 Ritrovo ore ' + t + ' \u00b7 ' + RITROVO.luogo : ''; };
 const carHTML = d => MACCHINE[d] ? `<div class="wpz">${esc(carTxt(d))}</div>` : '';
 const GIRONE = window.AICS.GIRONE || [], RISULTATI = window.AICS.RISULTATI || {};
   const { WEEK_SCHEDULE, MATCHES, MATCH_EXTRA, SEASON_ARCHIVE, STANDINGS, STANDINGS_SOURCE } = window.AICS;
@@ -873,6 +880,7 @@ function renderDay(){
     h += `<div class="it"><p class="m-opp">${esc(m.opp)}</p>
       <p class="m-line"><span class="tag${m.home?' home':''}">${homeAway(m.home)}</span>Ore ${esc(m.time)}${m.type?' · '+esc(m.type):''}</p>
       <p class="m-line">${esc(gymName(m.gym))}${g&&g.addr?', '+esc(g.addr):''}</p>
+      ${(!m.home && !r && ritrovoTime(m))?`<p class="m-line"><b>${esc(ritTxt(m))}</b></p>`:''}
       ${(!m.home && !r && MACCHINE[m.date])?`<p class="m-line"><b>${esc(carTxt(m.date))}</b></p>`:''}
       ${r?`<p class="m-line"><span class="res ${r.us>r.them?'w':'l'}">${r.us>r.them?'Vinta':'Persa'} ${r.us} – ${r.them}</span></p>`:''}
       ${r?'':calActions(m)}</div>`;
@@ -890,14 +898,14 @@ function renderNext(){
   if(!n){ box.hidden = true; return; }
   box.hidden = false;
   box.innerHTML = `<div><p class="sm">Prossima partita, ${esc(whenTxt(daysFrom(n.date)))}</p>
-    <p class="big">${esc(n.opp)}</p><p class="sm">${esc(fmtLong(parseDate(n.date)))}, ore ${esc(n.time)} · ${homeAway(n.home)}</p>${(!n.home && MACCHINE[n.date])?`<p class="sm">${esc(carTxt(n.date))}</p>`:''}</div>
+    <p class="big">${esc(n.opp)}</p><p class="sm">${esc(fmtLong(parseDate(n.date)))}, ore ${esc(n.time)} · ${homeAway(n.home)}</p>${(!n.home && ritrovoTime(n))?`<p class="sm">${esc(ritTxt(n))}</p>`:''}${(!n.home && MACCHINE[n.date])?`<p class="sm">${esc(carTxt(n.date))}</p>`:''}</div>
     <button type="button" data-date="${n.date}">Apri</button>`;
 }
 function renderMatchList(){
   const up = upcoming(), pa = past();
   let h = up.length ? up.map((m,i) => `<button type="button" class="row${i===0?' next':''}" data-date="${m.date}">
       <span class="t">${esc(m.opp)} – ${esc(parseDate(m.date).toLocaleDateString('it-IT',{weekday:'short', day:'numeric', month:'short'}))}</span>
-      <span class="s">Ore ${esc(m.time)} · ${homeAway(m.home)} · ${esc(gymName(m.gym))}</span>${(!m.home && MACCHINE[m.date])?`<span class="s" style="font-weight:700;color:var(--ink)">${esc(carTxt(m.date))}</span>`:''}</button>`).join('')
+      <span class="s">Ore ${esc(m.time)} · ${homeAway(m.home)} · ${esc(gymName(m.gym))}</span>${(!m.home && ritrovoTime(m))?`<span class="s" style="font-weight:700;color:var(--ink)">${esc(ritTxt(m))}</span>`:''}${(!m.home && MACCHINE[m.date])?`<span class="s" style="font-weight:700;color:var(--ink)">${esc(carTxt(m.date))}</span>`:''}</button>`).join('')
     : '<p class="empty">Nessuna partita in programma.</p>';
   if(pa.length){
     h += '<h3>Partite giocate</h3>' + pa.map(m => {
@@ -1966,7 +1974,7 @@ function weekRowHTML(it){
   const title = it.isMatch ? 'Partita' : 'Allenamento';
   const sub = [it.place, it.extra].filter(Boolean).join(' · ');
   const inner = `<div class="wd"><b>${dt.getDate()}</b><span>${esc(dayLabelFromISO(it.date).slice(0,3))}</span></div>
-    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}</div>
+    <div class="wi"><div class="wt">${time?esc(time)+' · ':''}${title}</div><div class="wp">${esc(sub)}</div>${(!it.isMatch && PASTE[it.date])?`<div class="wpz">🍕 Paste: ${esc(PASTE[it.date])}</div>`:''}${(it.isMatch && (()=>{const mm=MATCHES.find(x=>x.date===it.date); return mm&&ritrovoTime(mm);})())?`<div class="wpz">\ud83d\udd52 Ritrovo ore ${esc(ritrovoTime(MATCHES.find(x=>x.date===it.date)))}</div>`:''}</div>
     ${it.isMatch?`${MACCHINE[it.date]?'<span class="wcar" role="img" aria-label="Macchina: '+esc(MACCHINE[it.date].filter(Boolean).join(', '))+'">🚗</span>':''}<span class="wtag">Partita</span>`:''}`;
   return it.isMatch
     ? `<button type="button" class="weekrow ismatch" data-date="${esc(it.date)}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;cursor:pointer">${inner}</button>`
@@ -1987,7 +1995,7 @@ function renderHomeNext3(){
     const dt = parseDate(m.date), g = gymById(m.gym);
     return `<button type="button" class="n3card" data-date="${esc(m.date)}" style="width:100%;border:1px solid var(--line);border-left:6px solid var(--team);font:inherit;color:inherit;cursor:pointer;text-align:left">
       <div class="wd"><b>${dt.getDate()}</b><span>${esc(dayLabelFromISO(m.date).slice(0,3))}</span></div>
-      <div class="wi"><div class="wt">${m.home?'':'@ '}${esc(m.opp)}</div><div class="wp">${esc(m.time)} · ${esc(g?g.name:'')} · ${homeAway(m.home)}</div>${m.home?'':carHTML(m.date)}</div>
+      <div class="wi"><div class="wt">${m.home?'':'@ '}${esc(m.opp)}</div><div class="wp">${esc(m.time)} · ${esc(g?g.name:'')} · ${homeAway(m.home)}</div>${m.home?'':(ritrovoTime(m)?`<div class="wpz">${esc(ritTxt(m))}</div>`:'')+carHTML(m.date)}</div>
     </button>`;
   }).join('');
 }
