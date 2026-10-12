@@ -66,3 +66,21 @@ window.AICS.MACCHINE = {
   '2027-04-16': ['M. Ravaioli', 'Pinza'],
   '2027-05-01': ['Naldini', 'Gorini']
 };
+
+/* =====================================================================
+   RITROVO PER LE TRASFERTE
+   Ci si trova sempre all'Hotel San Giorgio (Forlì, vicino al casello) e l'obiettivo è essere in palestra
+   'prima' minuti prima dell'inizio della partita. L'orario di ritrovo = inizio partita \u2212 prima \u2212 minuti di viaggio
+   (arrotondato ai 5 minuti inferiori). I minuti di viaggio sono stime in pulmino dall'hotel alla palestra
+   (con un po' di margine): modifica la cifra della palestra se serve.
+   ===================================================================== */
+window.AICS.RITROVO = {
+  luogo: 'Hotel San Giorgio (Forl\u00ec, vicino al casello)',
+  prima: 60,
+  minuti: {
+    'cesena': 25, 'bertinoro': 25, 'faenza': 30, 'cesenatico': 40,
+    'imola': 40, 'castelsanpietro': 50, 'santagata': 50, 'castelguelfo': 55,
+    'ozzano': 60, 'budrio': 70, 'bologna-palacus': 70, 'bologna-moratello': 70,
+    'casalecchio': 80, 'baricella': 80, 'montesanpietro': 90
+  }
+};
