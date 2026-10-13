@@ -69,13 +69,13 @@ window.AICS.MACCHINE = {
 
 /* =====================================================================
    RITROVO PER LE TRASFERTE
-   Ci si trova sempre all'Hotel San Giorgio (Forlì, vicino al casello) e l'obiettivo è essere in palestra
+   Ci si trova sempre all'Hotel San Giorgio e l'obiettivo è essere in palestra
    'prima' minuti prima dell'inizio della partita. L'orario di ritrovo = inizio partita \u2212 prima \u2212 minuti di viaggio
    (arrotondato ai 5 minuti inferiori). I minuti di viaggio sono stime in pulmino dall'hotel alla palestra
    (con un po' di margine): modifica la cifra della palestra se serve.
    ===================================================================== */
 window.AICS.RITROVO = {
-  luogo: 'Hotel San Giorgio (Forl\u00ec, vicino al casello)',
+  luogo: 'Hotel San Giorgio',
   prima: 60,
   minuti: {
     'cesena': 25, 'bertinoro': 25, 'faenza': 30, 'cesenatico': 40,
