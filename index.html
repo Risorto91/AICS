@@ -1077,10 +1077,31 @@ function detailRow(colspan, innerHtml){
 function statHead(first, pctMode){
   return `<tr><th>${esc(first)}</th><th>Pt</th><th>${pctMode?'2P%':'2P'}</th><th>${pctMode?'3P%':'3P'}</th><th>${pctMode?'TL%':'TL'}</th><th>RO</th><th>RD</th><th>RT</th><th>As</th><th>PP</th><th>Rb</th><th>St</th><th>Fal</th><th>FS</th><th>Val</th><th>Eff</th><th>+/-</th></tr>`;
 }
+function refTableHTML(ref){
+  const pl = ref.players.slice().sort((a,b)=>b.pts-a.pts||(+a.n)-(+b.n));
+  return `<div class="tscroll"><table class="st"><thead><tr><th>Giocatore</th><th>Pt</th><th>Falli</th><th>Tecnici</th></tr></thead><tbody>${pl.map(p=>`<tr><td style="text-align:left">${esc(p.n)} ${esc(p.name)}</td><td>${p.pts}</td><td>${p.pf}${p.pf>=5?' ⛔':''}</td><td>${p.t||''}</td></tr>`).join('')}</tbody></table></div>${ref.note?`<p class="fine" style="padding:0">${esc(ref.note)}</p>`:''}`;
+}
+function refMatches(){ return MATCHES.filter(m=>m.box || (m.result && MATCH_EXTRA[m.date] && MATCH_EXTRA[m.date].ref)).sort((a,b)=>a.date.localeCompare(b.date)); }
 function renderStatsMatch(){
-  const list = played(), box = $('#stats-match');
+  const list = refMatches(), box = $('#stats-match');
   if(!list.length){ box.innerHTML = '<p class="empty">Nessuna statistica disponibile ancora: comparirà qui dopo la prima partita.</p>'; return; }
   if(!list.some(m=>m.date===st.mid)) st.mid = list[list.length-1].date;
+  const m0 = list.find(x=>x.date===st.mid);
+  if(!m0.box){
+    const r0 = m0.result, win0 = r0.us > r0.them, ex = MATCH_EXTRA[m0.date], q = ex.quarters, g0 = gymById(m0.gym);
+    let h0 = `<div class="selwrap"><select data-mid-select aria-label="Scegli la partita">${list.map(x =>
+      `<option value="${esc(x.date)}" ${x.date===st.mid?'selected':''}>${esc(fmtShort(x.date))} · ${x.home?'':'@ '}${esc(x.opp)}</option>`).join('')}</select></div>`;
+    h0 += `<div class="sumcard"><div><p class="m-line">${esc(fmtLong(parseDate(m0.date)))} · ${homeAway(m0.home)}${g0?' · '+esc(g0.name):''}</p>
+      <p class="m-opp">${esc(m0.home?TEAM.name+' - '+m0.opp:m0.opp+' - '+TEAM.name)}</p>
+      <p class="m-line"><span class="res ${win0?'w':'l'}">${win0?'Vinta':'Persa'}</span></p></div>
+      <div class="score ${win0?'w':'l'}">${r0.us}–${r0.them}</div></div>`;
+    h0 += `<div class="tscroll"><table class="qtable"><thead><tr><th></th>${q.map((x,i)=>`<th>${i<4?(i+1)+'°Q':'TS'}</th>`).join('')}<th>Finale</th></tr></thead><tbody>
+      <tr><td style="text-align:left;font-weight:700">${esc(TEAM.name)}</td>${q.map(x=>`<td>${x[0]}</td>`).join('')}<td style="font-weight:700">${r0.us}</td></tr>
+      <tr><td style="text-align:left;font-weight:700">${esc(m0.opp)}</td>${q.map(x=>`<td>${x[1]}</td>`).join('')}<td style="font-weight:700">${r0.them}</td></tr></tbody></table></div>`;
+    h0 += refTableHTML(ex.ref);
+    if(ex.comment) h0 += `<div class="comment-box">${esc(ex.comment)}</div>`;
+    box.innerHTML = h0; return;
+  }
   const m = list.find(x=>x.date===st.mid), r = m.result, win = r.us > r.them;
   const players = m.box.players, tot = teamTotal(players), opp = m.box.oppTotal;
   const lead = k => { const s = players.slice().sort((a,b)=>(b[k]||0)-(a[k]||0)); return s[0] && s[0][k] ? s[0] : null; };
@@ -1999,7 +2020,7 @@ function renderHomeNext3(){
   }).join('');
 }
 function lastPlayedMatch(){
-  const cur = played().map(m => ({ ...m, _src:'current' }));
+  const cur = refMatches().map(m => ({ ...m, _src:'current' }));
   const arc = SEASON_ARCHIVE.matches.map((m,i) => ({ ...m, _src:'archive', _idx:i }));
   const all = cur.concat(arc).filter(m=>m.date);
   if(!all.length) return null;
@@ -2048,6 +2069,7 @@ function renderHomeLast(){
       <tr><td style="text-align:left;font-weight:700">${esc(m.opp)}</td>${q.map(x=>`<td>${x[1]}</td>`).join('')}<td style="font-weight:700">${m.result.them}</td></tr>
     </tbody></table></div>`;
     if(extra.prog) h += `<div class="chart">${progressionSVG(extra.prog, m.opp)}<div class="leg2"><span><i style="background:var(--team)"></i>${esc(TEAM.name)}</span><span><i style="background:#9aa59e"></i>${esc(m.opp)}</span></div></div>`;
+    if(extra.ref) h += refTableHTML(extra.ref);
     if(extra.comment) h += `<div class="comment-box">${esc(extra.comment)}</div>`;
   }
   h += `<div class="hcard-actions"><button type="button" class="chip" id="btn-goto-last-stats">Statistiche complete →</button></div>`;
