@@ -39,8 +39,15 @@ window.AICS.WEEK_SCHEDULE = [
 window.AICS.PASTE = {
   '2026-10-06': 'Gasperini',
   '2026-10-13': 'M. Ravaioli',
-  '2026-10-20': 'Lazzarini (Coach), versione con dolce',
-  '2026-10-27': 'M. Ravaioli'
+  '2026-10-20': 'Pinza (ritardo allenamento)',
+  '2026-10-27': 'Lollo (ritardo partita)',
+  '2026-11-03': 'Mini (tecnico)',
+  '2026-11-17': 'Grilli (ritardo partita)',
+  '2026-11-24': 'Fede B (primo canestro)',
+  '2026-12-01': 'Pinza (tecnico, protesta plateale)',
+  '2026-12-08': 'Ciccio (tecnico, proteste)',
+  '2026-12-15': 'Mini (tecnico, flopping)',
+  '2026-12-22': 'Enri (tecnico, esultanza)'
 };
 
 /* =====================================================================
