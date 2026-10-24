@@ -28,7 +28,13 @@ window.AICS.WEEK_SCHEDULE = [
   { date:'2026-10-20', start:'20:45', end:'22:30', place:'Palestra Romiti' },
   { date:'2026-10-22', start:'18:00', end:'20:00', place:'Palestra Romiti' },
   { date:'2026-10-23', start:'20:00', end:'22:00', place:'Palestra Romiti' },
-  { date:'2026-10-24', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Guelfo Basket', match:true }
+  { date:'2026-10-24', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Guelfo Basket', match:true },
+
+  /* Settimana 26 ottobre - 1 novembre */
+  { date:'2026-10-26', start:'21:00', end:'23:00', place:'Palestra Monti' },
+  { date:'2026-10-27', start:'21:00', end:'22:30', place:'Palestra Romiti' },
+  { date:'2026-10-29', start:'18:00', end:'20:00', place:'Palestra Romiti' },
+  { date:'2026-10-31', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs International Basket Imola', match:true }
 ];
 
 /* =====================================================================
