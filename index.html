@@ -1116,7 +1116,8 @@ function renderStatsMatch(){
     <p class="m-line"><span class="res ${win?'w':'l'}">${win?'Vinta':'Persa'}</span></p></div>
     <div class="score ${win?'w':'l'}">${r.us}–${r.them}</div></div>`;
   h += `<div class="leaders">${kp('pts','Punti')}${kp('reb','Rimbalzi')}${kp('ast','Assist')}</div>`;
-  if(tot.pts !== r.us) h += `<p class="warn">I punti dei singoli (${tot.pts}) non coincidono con il punteggio finale (${r.us}): controlla i dati.</p>`;
+  if(tot.pts !== r.us && MATCH_EXTRA[m.date] && MATCH_EXTRA[m.date].scoreNote) h += `<p class="fine" style="padding:0">${esc(MATCH_EXTRA[m.date].scoreNote)}</p>`;
+  else if(tot.pts !== r.us) h += `<p class="warn">I punti dei singoli (${tot.pts}) non coincidono con il punteggio finale (${r.us}): controlla i dati.</p>`;
   h += `<div class="tscroll"><table class="st"><thead>${statHead('Giocatore', st.pct)}</thead><tbody>`;
   const sortedPlayers = players.slice().sort((a,b)=>b.pts-a.pts);
   let shotShown = false;
@@ -1356,8 +1357,9 @@ function teamStatsHTML(list, prevList){
 function renderStatsSeason(){
   const list = played(), box = $('#stats-season');
   if(!list.length){ box.innerHTML = '<p class="empty">Nessuna statistica disponibile ancora: le medie stagionali compariranno qui dopo la prima partita.</p>'; return; }
-  const w = list.filter(m=>m.result.us>m.result.them).length, l = list.length-w;
-  const pf = list.reduce((s,m)=>s+m.result.us,0)/list.length, pa = list.reduce((s,m)=>s+m.result.them,0)/list.length;
+  const rl = refMatches();
+  const w = rl.filter(m=>m.result.us>m.result.them).length, l = rl.length-w;
+  const pf = rl.reduce((s,m)=>s+m.result.us,0)/rl.length, pa = rl.reduce((s,m)=>s+m.result.them,0)/rl.length;
   let h = `<div class="kpis">
     <div class="kpi"><b>${w}–${l}</b><span>Vittorie e sconfitte</span></div>
     <div class="kpi"><b>${fmt1(pf-pa).replace(/^(\d)/,'+$1')}</b><span>Differenza media</span></div>
@@ -2068,6 +2070,7 @@ function renderHomeLast(){
       <tr><td style="text-align:left;font-weight:700">${esc(TEAM.name)}</td>${q.map(x=>`<td>${x[0]}</td>`).join('')}<td style="font-weight:700">${m.result.us}</td></tr>
       <tr><td style="text-align:left;font-weight:700">${esc(m.opp)}</td>${q.map(x=>`<td>${x[1]}</td>`).join('')}<td style="font-weight:700">${m.result.them}</td></tr>
     </tbody></table></div>`;
+    if(extra.scoreNote) h += `<p class="fine" style="padding:0">${esc(extra.scoreNote)}</p>`;
     if(extra.prog) h += `<div class="chart">${progressionSVG(extra.prog, m.opp)}<div class="leg2"><span><i style="background:var(--team)"></i>${esc(TEAM.name)}</span><span><i style="background:#9aa59e"></i>${esc(m.opp)}</span></div></div>`;
     if(extra.ref) h += refTableHTML(extra.ref);
     if(extra.comment) h += `<div class="comment-box">${esc(extra.comment)}</div>`;
