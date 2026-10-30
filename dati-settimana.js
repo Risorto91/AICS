@@ -34,7 +34,13 @@ window.AICS.WEEK_SCHEDULE = [
   { date:'2026-10-26', start:'21:00', end:'23:00', place:'Palestra Monti' },
   { date:'2026-10-27', start:'21:00', end:'22:30', place:'Palestra Romiti' },
   { date:'2026-10-29', start:'18:00', end:'20:00', place:'Palestra Romiti' },
-  { date:'2026-10-31', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs International Basket Imola', match:true }
+  { date:'2026-10-31', start:'18:45', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs International Basket Imola', match:true },
+
+  /* Settimana 2-8 novembre */
+  { date:'2026-11-03', start:'21:00', end:'22:30', place:'Palestra Romiti' },
+  { date:'2026-11-04', start:'21:00', end:'23:00', place:'Palestra Monti' },
+  { date:'2026-11-06', start:'20:00', end:'22:00', place:'Palestra Romiti' },
+  { date:'2026-11-07', start:'18:00', end:'',      place:'Palestra Pal. Cabral', extra:'AICS vs Pol G. Masi Casalecchio', match:true }
 ];
 
 /* =====================================================================
