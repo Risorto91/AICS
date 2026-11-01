@@ -1079,7 +1079,8 @@ function statHead(first, pctMode){
 }
 function refTableHTML(ref){
   const pl = ref.players.slice().sort((a,b)=>b.pts-a.pts||(+a.n)-(+b.n));
-  return `<div class="tscroll"><table class="st"><thead><tr><th>Giocatore</th><th>Pt</th><th>Falli</th><th>Tecnici</th></tr></thead><tbody>${pl.map(p=>`<tr><td style="text-align:left">${esc(p.n)} ${esc(p.name)}</td><td>${p.pts}</td><td>${p.pf}${p.pf>=5?' ⛔':''}</td><td>${p.t||''}</td></tr>`).join('')}</tbody></table></div>${ref.note?`<p class="fine" style="padding:0">${esc(ref.note)}</p>`:''}`;
+  const hasF = pl.some(p=>p.pf!=null), hasT = pl.some(p=>p.t);
+  return `<div class="tscroll"><table class="st"><thead><tr><th>Giocatore</th><th>Pt</th>${hasF?'<th>Falli</th>':''}${hasT?'<th>Tecnici</th>':''}</tr></thead><tbody>${pl.map(p=>`<tr><td style="text-align:left">${esc(p.n)} ${esc(p.name)}</td><td>${p.pts}</td>${hasF?`<td>${p.pf}${p.pf>=5?' ⛔':''}</td>`:''}${hasT?`<td>${p.t||''}</td>`:''}</tr>`).join('')}</tbody></table></div>${ref.opp?`<p class="fine" style="padding:0"><b>Avversari:</b> ${esc(ref.opp)}</p>`:''}${ref.note?`<p class="fine" style="padding:0">${esc(ref.note)}</p>`:''}`;
 }
 function refMatches(){ return MATCHES.filter(m=>m.box || (m.result && MATCH_EXTRA[m.date] && MATCH_EXTRA[m.date].ref)).sort((a,b)=>a.date.localeCompare(b.date)); }
 function renderStatsMatch(){
