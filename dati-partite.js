@@ -46,18 +46,30 @@ window.AICS.MATCH_EXTRA = {
   '2026-10-31': {
     quarters: [[25,25],[22,20],[17,21],[24,21]],
     ref: { players: [
-      {n:'17',name:'Simone Ravaioli',pts:17},
-      {n:'23',name:'Pinza',pts:17},
-      {n:'10',name:'Matteo Ravaioli',pts:17},
-      {n:'21',name:'Mistral',pts:11},
-      {n:'6',name:'Naldini',pts:11},
-      {n:'11',name:'Zammarchi',pts:4},
-      {n:'99',name:'Gassama',pts:4},
-      {n:'91',name:'Lombini',pts:4},
-      {n:'8',name:'Gorini',pts:3},
-      {n:'30',name:'Bellesia',pts:0}
-    ], opp: "Buscaroli R. 31, Roli N. 25, Carbone T. 17, Di Antonio E. 8, Colombo T. 3, Roli S. 2, Noferini A. 1", note:'Dal tabellino: solo punti (falli non disponibili). Statistiche complete in arrivo.' },
-    comment: "Vittoria 88-87 in casa contro International Imola, la prima della stagione. Partita sempre in equilibrio: parità al 10' (25-25), AICS avanti all'intervallo (47-45), poi sotto di due al 30' (64-66) e decisiva nell'ultimo quarto, vinto 24-21. Tre giocatori a 17 punti (Simone Ravaioli, Pinza e Matteo Ravaioli), 11 per Mistral e Naldini. Per Imola 31 punti di Buscaroli e 25 di Roli N."
+      {n:'10',name:'Matteo Ravaioli',pts:17,p2:2,p3:3,ft:4,pf:3,t:1},
+      {n:'17',name:'Simone Ravaioli',pts:17,p2:1,p3:4,ft:3,pf:3},
+      {n:'23',name:'Pinza',pts:17,p2:3,p3:3,ft:2,pf:1},
+      {n:'6',name:'Naldini',pts:11,p2:3,p3:0,ft:5,pf:4},
+      {n:'21',name:'Mistral',pts:11,p2:3,p3:0,ft:5,pf:3},
+      {n:'11',name:'Zammarchi',pts:4,p2:2,p3:0,ft:0,pf:3},
+      {n:'91',name:'Lombini',pts:4,p2:2,p3:0,ft:0,pf:0},
+      {n:'99',name:'Gassama',pts:4,p2:2,p3:0,ft:0,pf:0},
+      {n:'8',name:'Gorini',pts:3,p2:0,p3:0,ft:3,pf:5},
+      {n:'30',name:'Bellesia',pts:0,p2:0,p3:0,ft:0,pf:0}
+    ], oppName: 'International Imola', oppPlayers: [
+      {n:'14',name:'Buscaroli R.',pts:31,p2:10,p3:3,ft:2,pf:0},
+      {n:'12',name:'Roli N.',pts:25,p2:0,p3:7,ft:4,pf:5,t:1},
+      {n:'9',name:'Carbone T.',pts:17,p2:5,p3:1,ft:4,pf:4},
+      {n:'20',name:'Di Antonio E.',pts:8,p2:3,p3:0,ft:2,pf:2},
+      {n:'6',name:'Colombo T.',pts:3,p2:0,p3:0,ft:3,pf:3},
+      {n:'4',name:'Roli S.',pts:2,p2:1,p3:0,ft:0,pf:0},
+      {n:'10',name:'Noferini A.',pts:1,p2:0,p3:0,ft:1,pf:2},
+      {n:'7',name:'Spinosa L.',pts:0,p2:0,p3:0,ft:0,pf:1},
+      {n:'8',name:'Basciani M.',pts:0,p2:0,p3:0,ft:0,pf:2},
+      {n:'13',name:'Bellini F.',pts:0,p2:0,p3:0,ft:0,pf:1},
+      {n:'15',name:'Savino S.',pts:0,p2:0,p3:0,ft:0,pf:4}
+    ], note:'Dal referto ufficiale: punti, canestri segnati (2P, 3P, tiri liberi) e falli, compresi i tecnici. Tiri tentati e rimbalzi non sono nel referto: statistiche complete in arrivo. Un tecnico alla panchina di ciascuna squadra.' },
+    comment: "Vittoria 88-87 in casa contro International Imola, la prima della stagione. Partita sempre in equilibrio: parità al 10' (25-25), AICS avanti all'intervallo (47-45), poi sotto di due al 30' (64-66) e decisiva nell'ultimo quarto, vinto 24-21. Tre giocatori a 17 punti (Simone Ravaioli, Pinza e Matteo Ravaioli), 11 per Mistral e Naldini. Dal referto: 10 triple segnate da AICS (4 di Simone Ravaioli, 3 di Matteo Ravaioli e 3 di Pinza) e 22 liberi realizzati. Per Imola 31 punti di Buscaroli e 25 di Roli N. (7 triple); usciti per 5 falli Gorini e Roli N."
   },
   '2026-10-24': {
     quarters: [[17,22],[19,18],[21,18],[18,23]],
