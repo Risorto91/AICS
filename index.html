@@ -564,7 +564,7 @@ const ROSTER = [
   { name:'Simone Ravaioli', num:17 },
   { name:'Federico Zammarchi', num:11, cap:true },
   { name:'Riccardo Gorini', num:8 },
-  { name:'Emanuele Agatensi', num:27 },
+  { name:'Emanuele Agatensi', num:5 },
   { name:'Luca Pedrizzi', num:1 },
   { name:'Marco Bergantini', num:3 },
   { name:'Federico Bellesia', num:30 }
@@ -1080,8 +1080,9 @@ function statHead(first, pctMode){
 function refTableHTML(ref){
   const mk = (list, first) => {
     const pl = list.slice().sort((a,b)=>b.pts-a.pts||(+a.n)-(+b.n));
-    const hasS = pl.some(p=>p.p2!=null), hasF = pl.some(p=>p.pf!=null), hasT = pl.some(p=>p.t);
-    return `<div class="tscroll"><table class="st"><thead><tr><th>${esc(first)}</th><th>Pt</th>${hasS?'<th>2P</th><th>3P</th><th>TL</th>':''}${hasF?'<th>Falli</th>':''}${hasT?'<th>Tecnici</th>':''}</tr></thead><tbody>${pl.map(p=>`<tr><td style="text-align:left">${esc(p.n)} ${esc(p.name)}</td><td>${p.pts}</td>${hasS?`<td>${p.p2}</td><td>${p.p3}</td><td>${p.ft}</td>`:''}${hasF?`<td>${p.pf}${p.pf>=5?' ⛔':''}</td>`:''}${hasT?`<td>${p.t||''}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
+    const hasM = pl.some(p=>p.min!=null), hasS = pl.some(p=>p.p2!=null), hasF = pl.some(p=>p.pf!=null), hasT = pl.some(p=>p.t), hasP = pl.some(p=>p.pm!=null);
+    const sg = v => (v>0?'+':'')+v;
+    return `<div class="tscroll"><table class="st"><thead><tr><th>${esc(first)}</th>${hasM?'<th>Min</th>':''}<th>Pt</th>${hasS?'<th>2P</th><th>3P</th><th>TL</th>':''}${hasF?'<th>Falli</th>':''}${hasT?'<th>Tecnici</th>':''}${hasP?'<th>+/-</th>':''}</tr></thead><tbody>${pl.map(p=>`<tr><td style="text-align:left">${esc(p.n)} ${esc(p.name)}</td>${hasM?`<td>${esc(p.min||'')}</td>`:''}<td>${p.pts}</td>${hasS?`<td>${p.p2}</td><td>${p.p3}</td><td>${p.fta!=null?p.ft+'/'+p.fta:p.ft}</td>`:''}${hasF?`<td>${p.pf}${p.pf>=5?' ⛔':''}</td>`:''}${hasT?`<td>${p.t||''}</td>`:''}${hasP?`<td>${p.pm!=null?sg(p.pm):''}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
   };
   return mk(ref.players,'Giocatore') + (ref.oppPlayers?mk(ref.oppPlayers, ref.oppName||'Avversari'):'') + (ref.opp?`<p class="fine" style="padding:0"><b>Avversari:</b> ${esc(ref.opp)}</p>`:'') + (ref.note?`<p class="fine" style="padding:0">${esc(ref.note)}</p>`:'');
 }
@@ -1092,14 +1093,14 @@ function renderStatsMatch(){
   if(!list.some(m=>m.date===st.mid)) st.mid = list[list.length-1].date;
   const m0 = list.find(x=>x.date===st.mid);
   if(!m0.box){
-    const r0 = m0.result, win0 = r0.us > r0.them, ex = MATCH_EXTRA[m0.date], q = ex.quarters, g0 = gymById(m0.gym);
+    const r0 = m0.result, win0 = r0.us > r0.them, ex = MATCH_EXTRA[m0.date], q = ex.quarters || null, g0 = gymById(m0.gym);
     let h0 = `<div class="selwrap"><select data-mid-select aria-label="Scegli la partita">${list.map(x =>
       `<option value="${esc(x.date)}" ${x.date===st.mid?'selected':''}>${esc(fmtShort(x.date))} · ${x.home?'':'@ '}${esc(x.opp)}</option>`).join('')}</select></div>`;
     h0 += `<div class="sumcard"><div><p class="m-line">${esc(fmtLong(parseDate(m0.date)))} · ${homeAway(m0.home)}${g0?' · '+esc(g0.name):''}</p>
       <p class="m-opp">${esc(m0.home?TEAM.name+' - '+m0.opp:m0.opp+' - '+TEAM.name)}</p>
       <p class="m-line"><span class="res ${win0?'w':'l'}">${win0?'Vinta':'Persa'}</span></p></div>
       <div class="score ${win0?'w':'l'}">${r0.us}–${r0.them}</div></div>`;
-    h0 += `<div class="tscroll"><table class="qtable"><thead><tr><th></th>${q.map((x,i)=>`<th>${i<4?(i+1)+'°Q':'TS'}</th>`).join('')}<th>Finale</th></tr></thead><tbody>
+    if(q) h0 += `<div class="tscroll"><table class="qtable"><thead><tr><th></th>${q.map((x,i)=>`<th>${i<4?(i+1)+'°Q':'TS'}</th>`).join('')}<th>Finale</th></tr></thead><tbody>
       <tr><td style="text-align:left;font-weight:700">${esc(TEAM.name)}</td>${q.map(x=>`<td>${x[0]}</td>`).join('')}<td style="font-weight:700">${r0.us}</td></tr>
       <tr><td style="text-align:left;font-weight:700">${esc(m0.opp)}</td>${q.map(x=>`<td>${x[1]}</td>`).join('')}<td style="font-weight:700">${r0.them}</td></tr></tbody></table></div>`;
     h0 += refTableHTML(ex.ref);
@@ -2070,7 +2071,7 @@ function renderHomeLast(){
     <div class="score ${win?'w':'l'}">${m.result.us}–${m.result.them}</div></div>`;
   if(extra){
     const q = extra.quarters;
-    h += `<div class="tscroll"><table class="qtable"><thead><tr><th></th>${q.map((x,i)=>`<th>${i<4?(i+1)+'°Q':'TS'}</th>`).join('')}<th>Finale</th></tr></thead><tbody>
+    if(q) h += `<div class="tscroll"><table class="qtable"><thead><tr><th></th>${q.map((x,i)=>`<th>${i<4?(i+1)+'°Q':'TS'}</th>`).join('')}<th>Finale</th></tr></thead><tbody>
       <tr><td style="text-align:left;font-weight:700">${esc(TEAM.name)}</td>${q.map(x=>`<td>${x[0]}</td>`).join('')}<td style="font-weight:700">${m.result.us}</td></tr>
       <tr><td style="text-align:left;font-weight:700">${esc(m.opp)}</td>${q.map(x=>`<td>${x[1]}</td>`).join('')}<td style="font-weight:700">${m.result.them}</td></tr>
     </tbody></table></div>`;
