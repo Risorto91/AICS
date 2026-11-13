@@ -52,7 +52,7 @@ window.AICS.GIRONE = [
   {g:680,r:6,date:'2026-11-07',time:'19:00',h:'Audace Bombers Bologna',a:'Pallacanestro Budrio'},
   {g:681,r:7,date:'2026-11-11',time:'21:00',h:'Buena Onda BC',a:'Basket 2005 Cesena'},
   {g:682,r:7,date:'2026-11-11',time:'21:00',h:'Bianconeriba Baricella',a:'Audace Bombers Bologna'},
-  {g:683,r:7,date:'2026-11-11',time:'20:45',h:'Raggisolaris Academy Faenza',a:'International Imola'},
+  {g:683,r:7,date:'2026-11-18',time:'20:45',h:'Raggisolaris Academy Faenza',a:'International Imola'},
   {g:684,r:7,date:'2026-11-11',time:'21:00',h:'Guelfo Basket',a:'Pallacanestro Budrio'},
   {g:685,r:7,date:'2026-11-11',time:'21:15',h:'CMO Ozzano',a:'Pol. G.Masi Casalecchio'},
   {g:686,r:7,date:'2026-11-10',time:'21:15',h:'Giardini Margherita',a:'Basket Voltone'},
@@ -292,5 +292,12 @@ window.AICS.RISULTATI = {
   677:[54,57],
   678:[77,85],
   679:[88,76],
-  680:[57,79]
+  680:[57,79],
+  681:[69,54],
+  682:[53,68],
+  684:[60,58],
+  685:[60,75],
+  686:[62,66],
+  687:[64,66],
+  688:[71,53]
 };
