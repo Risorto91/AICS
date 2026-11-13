@@ -46,7 +46,12 @@ window.AICS.WEEK_SCHEDULE = [
   { date:'2026-11-09', start:'20:00', end:'22:00', place:'Palestra Romiti' },
   { date:'2026-11-10', start:'21:00', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Lusa Basket Massa', match:true },
   { date:'2026-11-12', start:'21:00', end:'23:00', place:'Palestra Buscherini' },
-  { date:'2026-11-13', start:'21:30', end:'',      place:'Palestra Palasport', extra:'AICS vs Pall. Castel S. Pietro', match:true }
+  { date:'2026-11-13', start:'21:30', end:'',      place:'Palestra Palasport', extra:'AICS vs Pall. Castel S. Pietro', match:true },
+
+  /* Settimana 16-22 novembre */
+  { date:'2026-11-17', start:'21:00', end:'22:30', place:'Palestra Romiti' },
+  { date:'2026-11-18', start:'20:00', end:'22:00', place:'Palestra Romiti' },
+  { date:'2026-11-20', start:'21:00', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Basket Voltone', match:true }
 ];
 
 /* =====================================================================
