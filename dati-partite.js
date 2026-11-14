@@ -17,7 +17,7 @@ window.AICS.MATCHES = [
   { date:'2026-10-31', time:'18:45', opp:'International Basket Imola',             home:true,  gym:'casa', result:{us:88,them:87} },
   { date:'2026-11-07', time:'18:00', opp:'Pol. G. Masi Casalecchio di Reno',       home:false, gym:'casalecchio', result:{us:69,them:58} },
   { date:'2026-11-10', time:'21:00', opp:'Lusa Basket Massa',                      home:true,  gym:'casa', result:{us:64,them:66} },
-  { date:'2026-11-13', time:'21:30', opp:'Pall. Castel S. Pietro T. 2010',         home:false, gym:'castelsanpietro' },
+  { date:'2026-11-13', time:'21:30', opp:'Pall. Castel S. Pietro T. 2010',         home:false, gym:'castelsanpietro', result:{us:81,them:63} },
   { date:'2026-11-20', time:'21:00', opp:"Basket Voltone M.le Monte S. Pietro",    home:true,  gym:'casa' },
   { date:'2026-11-28', time:'20:45', opp:'Raggisolaris Academy Faenza',            home:false, gym:'faenza' },
   { date:'2026-12-04', time:'21:00', opp:'Cesena Basket 2005',                     home:true,  gym:'casa' },
@@ -43,6 +43,23 @@ window.AICS.MATCHES = [
 ];
 
 window.AICS.MATCH_EXTRA = {
+  '2026-11-13': {
+    quarters: [[30,15],[21,22],[16,12],[14,14]],
+    ref: { players: [
+      {n:'21',name:'Mistral',min:'23:10',pts:25,p2:7,p3:1,ft:8,fta:8,pf:4,pm:32},
+      {n:'10',name:'Matteo Ravaioli',min:'15:01',pts:11,p2:1,p3:2,ft:3,fta:4,pf:3,pm:17},
+      {n:'11',name:'Zammarchi',min:'18:00',pts:9,p2:3,p3:0,ft:3,fta:4,pf:3,pm:10},
+      {n:'17',name:'Simone Ravaioli',min:'24:36',pts:9,p2:1,p3:1,ft:4,fta:5,pf:1,pm:4},
+      {n:'27',name:'Gassama',min:'19:30',pts:9,p2:4,p3:0,ft:1,fta:2,pf:2,pm:8},
+      {n:'30',name:'Bellesia',min:'19:32',pts:7,p2:2,p3:1,ft:0,fta:0,pf:2,pm:-5},
+      {n:'8',name:'Gorini',min:'18:50',pts:4,p2:2,p3:0,ft:0,fta:0,pf:3,pm:5},
+      {n:'23',name:'Pinza',min:'22:40',pts:4,p2:0,p3:1,ft:1,fta:2,pf:1,pm:12},
+      {n:'6',name:'Naldini',min:'17:54',pts:2,p2:1,p3:0,ft:0,fta:0,pf:3,pm:14},
+      {n:'91',name:'Lombini',min:'13:09',pts:1,p2:0,p3:0,ft:1,fta:2,pf:2,pm:-6},
+      {n:'22',name:'Malaguti',min:'07:38',pts:0,p2:0,p3:0,ft:0,fta:0,pf:2,pm:-1}
+    ], note:'Dal tabellino FIP stats: punti, canestri segnati (2P, 3P, tiri liberi su tentati), minuti, falli fatti e +/-. Tiri tentati, rimbalzi e altre statistiche non sono disponibili.' },
+    comment: "Vittoria in trasferta a Castel S. Pietro, 81-63. La partita si \u00e8 indirizzata subito: primo quarto 30-15 e vantaggio massimo di 22 punti, senza cambi di vantaggio. Mistral top scorer con 25 punti e 8/8 ai liberi, poi Matteo Ravaioli con 11 e Zammarchi, Simone Ravaioli e Gassama con 9. Ai liberi 21/27."
+  },
   '2026-11-10': {
     quarters: [[18,22],[15,9],[21,18],[10,17]],
     ref: { players: [
