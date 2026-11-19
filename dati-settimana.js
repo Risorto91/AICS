@@ -51,7 +51,13 @@ window.AICS.WEEK_SCHEDULE = [
   /* Settimana 16-22 novembre */
   { date:'2026-11-17', start:'21:00', end:'22:30', place:'Palestra Romiti' },
   { date:'2026-11-18', start:'20:00', end:'22:00', place:'Palestra Romiti' },
-  { date:'2026-11-20', start:'21:00', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Basket Voltone', match:true }
+  { date:'2026-11-20', start:'21:00', end:'',      place:'Palestra Villa Romiti', extra:'AICS vs Basket Voltone', match:true },
+
+  /* Settimana 23-29 novembre */
+  { date:'2026-11-23', start:'20:00', end:'22:00', place:'Palestra Romiti' },
+  { date:'2026-11-24', start:'20:30', end:'22:30', place:'Palestra Romiti' },
+  { date:'2026-11-27', start:'20:00', end:'22:00', place:'Palestra Romiti' },
+  { date:'2026-11-28', start:'20:45', end:'',      place:'Palestra Campus', extra:'AICS vs Raggisolaris Academy Faenza', match:true }
 ];
 
 /* =====================================================================
